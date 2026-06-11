@@ -22,12 +22,13 @@
   body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; }
   ::selection { background: var(--pink); color: #fff; }
 
-  /* ---------- masthead ---------- */
-  #masthead { border-bottom: 1px solid var(--ink); }
-  #masthead .in { max-width: 1140px; margin: 0 auto; padding: 13px 24px; display: flex; justify-content: space-between; align-items: baseline;
-                  font: 600 11px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
-  #masthead .mid { font-family: var(--display); font-weight: 800; font-size: 14px; letter-spacing: 0.04em; text-transform: none; }
-  #masthead .side { color: var(--muted); }
+  /* ---------- masthead + progress ---------- */
+  #progress { position: fixed; top: 0; left: 0; height: 3px; width: 0; background: var(--pink); z-index: 50; }
+  #masthead { background: #121212; }
+  #masthead .in { max-width: 1140px; margin: 0 auto; padding: 14px 24px; display: flex; justify-content: space-between; align-items: baseline;
+                  font: 600 11px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: #fff; }
+  #masthead .mid { font-family: var(--display); font-weight: 800; font-size: 15px; letter-spacing: 0.04em; text-transform: none; }
+  #masthead .side { color: #9a9a9a; }
   @media (max-width: 700px) { #masthead .side { display: none; } }
 
   /* ---------- hero ---------- */
@@ -58,6 +59,14 @@
   .scrolly { position: relative; display: flex; max-width: 1280px; margin: 0 auto; padding: 0 24px; }
   .scrolly article { position: relative; flex: 0 0 320px; max-width: 320px; z-index: 2; }
   .scrolly figure { position: sticky; top: 0; flex: 1; height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center; }
+  .chart-head { position: absolute; top: 4.5vh; left: clamp(16px, 7%, 80px); max-width: 320px; z-index: 1; }
+  .chart-head .t { font: 700 17px/1.3 var(--display); }
+  .chart-head .d { font: 400 12.5px/1.5 var(--sans); color: var(--muted); margin-top: 3px; }
+  #tip { position: fixed; pointer-events: none; display: none; z-index: 60; background: #121212; color: #fff;
+         padding: 8px 12px; border-radius: 4px; font: 400 12px/1.55 var(--sans); max-width: 230px; }
+  #tip b { font-weight: 600; }
+  .hl-pink { color: var(--pink); font-weight: 600; }
+  .hl-teal { color: var(--teal); font-weight: 600; }
   .scrolly figure svg { width: 100%; height: auto; max-height: 94vh; }
   .step { min-height: 85vh; display: flex; align-items: center; opacity: 0.25; transition: opacity 0.3s; }
   .step.is-active { opacity: 1; }
@@ -105,7 +114,8 @@
   #verdict b { font-weight: 700; }
   #strip { margin-top: 6px; }
 
-  footer { max-width: 640px; margin: 0 auto; padding: 48px 24px 90px; font: 400 13.5px/1.8 var(--sans); color: var(--muted); border-top: 1px solid var(--line); }
+  footer { max-width: 640px; margin: 0 auto; padding: 48px 24px 90px; color: var(--muted); border-top: 1px solid var(--line); }
+  footer p { font: italic 400 14.5px/1.75 var(--serif); }
   footer h4 { font: 600 12px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); margin: 0 0 14px; }
   footer a { color: var(--teal); }
   footer p { margin: 0 0 14px; }
@@ -120,6 +130,8 @@
 </head>
 <body>
 
+<div id="progress"></div>
+<div id="tip"></div>
 <div id="masthead"><div class="in">
   <span class="side">Advanced Interactive Visualization</span>
   <span class="mid">Group 4 · Social Media</span>
@@ -130,12 +142,12 @@
   <div id="heroviz">
     <div class="herocell" id="hero-left">
       <svg class="waffle"></svg>
-      <div class="heronum">62<span style="font-size:0.55em"> in 100</span></div>
+      <div class="heronum"><span data-count="62">0</span><span style="font-size:0.55em"> in 100</span></div>
       <div class="herocap">videos never pass 1,000 views</div>
     </div>
     <div class="herocell" id="hero-right">
       <svg class="waffle"></svg>
-      <div class="heronum" style="color:var(--pink)">64%</div>
+      <div class="heronum" style="color:var(--pink)"><span data-count="64">0</span>%</div>
       <div class="herocap">of all views go to the top 1% of videos</div>
     </div>
   </div>
@@ -175,7 +187,11 @@
       <p>Followers set your starting odds. The algorithm rolls the dice anyway.</p></div></div>
     <div class="spacer-half"></div>
   </article>
-  <figure><svg id="svg1"></svg></figure>
+  <figure>
+    <div class="chart-head"><div class="t">1,872 creators, by audience and typical views</div>
+      <div class="d">Median views per video vs. average followers. Both axes logarithmic. Hover any dot.</div></div>
+    <svg id="svg1"></svg>
+  </figure>
 </section>
 
 <section class="prose">
@@ -193,15 +209,19 @@
     <div class="step" data-step="1"><div class="card"><span class="n">THE OVERNIGHT HIT</span>
       <p>On November 4th, an account with <b>14,000 followers</b> posted a cooking video. Four million views in the first week. <b>8.4 million</b> by day 30.</p>
       <p>That's 600 views for every single follower.</p></div></div>
-    <div class="step" data-step="2"><div class="card"><span class="n">THE SLOW BURNER</span>
+    <div class="step" data-step="2"><div class="card"><span class="n" style="color:var(--teal)">THE SLOW BURNER</span>
       <p>This video was dead on arrival: <b>1,245 views after an entire week</b>.</p>
       <p>Then the algorithm changed its mind. By day 30: <b>12.9 million</b>. Nobody — including its creator — can plan this.</p></div></div>
-    <div class="step" data-step="3"><div class="card"><span class="n">THE FLOP</span>
+    <div class="step" data-step="3"><div class="card"><span class="n" style="color:var(--ink)">THE FLOP</span>
       <p>But this is the line to remember, because it's the typical one. Half of all videos end their month below <b>641 views</b>.</p>
       <p>The hits you just saw are the lottery's advertising. This is the ticket most people hold.</p></div></div>
     <div class="spacer-half"></div>
   </article>
-  <figure><svg id="svg2"></svg></figure>
+  <figure>
+    <div class="chart-head"><div class="t">1,183 videos, 30 days each</div>
+      <div class="d">Cumulative views since posting, log scale. Sampled across all outcome levels.</div></div>
+    <svg id="svg2"></svg>
+  </figure>
 </section>
 
 <section class="prose">
@@ -217,7 +237,7 @@
       <p>The distribution of final view counts. The <b>median video gets 641 views</b>; the <b>average is 31,600</b> — fifty times higher, dragged up by a handful of monsters on the right.</p>
       <p>Whenever a mean is 50&times; the median, you're looking at a lottery.</p></div></div>
     <div class="step" data-step="1"><div class="card">
-      <p>The pink tail is the <b>top 1%</b> of videos.</p>
+      <p>The pink tail is the <b class="hl-pink">top 1%</b> of videos.</p>
       <p>Those 2,095 videos collected <b>64% of all views</b> in the dataset. The remaining 207,448 videos shared the rest.</p></div></div>
     <div class="step" data-step="2"><div class="card">
       <p>So do followers matter or not? Both. Each grid is <b>100 typical videos</b>, grouped by the creator's audience size.</p>
@@ -225,7 +245,11 @@
       <p>Followers buy you more tickets. They don't buy the prize.</p></div></div>
     <div class="spacer-half"></div>
   </article>
-  <figure><svg id="svg3"></svg></figure>
+  <figure>
+    <div class="chart-head"><div class="t">The payout table</div>
+      <div class="d">How all 209,543 videos ended their first month.</div></div>
+    <svg id="svg3"></svg>
+  </figure>
 </section>
 
 <section class="prose" id="movers-intro">
@@ -253,12 +277,12 @@
 </section>
 
 <section class="prose">
-  <p>The machine that promised to free creators from the tyranny of follower counts replaced it with something stranger: a system where a cooking video from nowhere outdraws a 28-million-follower account, where a dead video resurrects itself in week two, and where the only reliable strategy is the lottery player's strategy — buy more tickets.</p>
-  <p>Half of everything posted disappears under a thousand views. One percent takes two-thirds of the prize pool. And six hundred thousand new tickets get printed every day.</p>
+  <p>The machine that promised to free creators from the tyranny of follower counts replaced it with something stranger: a system where <span class="hl-pink">a cooking video from nowhere</span> outdraws a 28-million-follower account, where <span class="hl-teal">a dead video resurrects itself in week two</span>, and where the only reliable strategy is the lottery player's strategy — buy more tickets.</p>
+  <p>Half of everything posted disappears under a thousand views. <span class="hl-pink">One percent takes two-thirds of the prize pool.</span> And every upload, from anyone, is another ticket.</p>
 </section>
 
 <footer>
-  <h4>Methods &amp; data</h4>
+  <h4>About this story</h4>
   <p>Data: <a href="https://huggingface.co/datasets/lingbow/tiktok-video-engagement-200k">lingbow/tiktok-video-engagement-200k</a> (CC&nbsp;BY-NC&nbsp;4.0) — 209,543 TikTok videos by 1,872 creators, posted 24&nbsp;June – 9&nbsp;November 2024, with daily engagement and follower panels. Views = cumulative play count on the last observed day. Lifelines use the 73,940 videos tracked for ≥30 days. Creator follower counts are averaged over the observation window; creator-level charts include creators with ≥5 videos. Medians are used throughout because of the extreme skew. Topic and emotion labels are model-derived by the dataset authors; engagement numbers are platform data.</p>
   <p>Built with D3.js and Scrollama for Assignment 3, Advanced Interactive Visualization, JKU Linz. Source on <a href="#">GitHub</a>.</p>
 </footer>
@@ -301,7 +325,20 @@ function axisTitle(svg, x, y, text, anchor = "middle", rotate = false) {
   }
   waffle("#hero-left .waffle", 62, "#b9b9b9", "#e9e9e9", true);
   waffle("#hero-right .waffle", 64, PINK, "#e9e9e9", false);
+  d3.selectAll(".heronum [data-count]").each(function () {
+    const el = this, target = +el.dataset.count;
+    d3.select(el).transition().duration(1500).ease(d3.easeCubicOut)
+      .tween("count", () => t => { el.textContent = Math.round(t * target); });
+  });
 })();
+
+/* reading progress bar + tooltip cleanup */
+window.addEventListener("scroll", () => {
+  const h = document.documentElement;
+  const p = h.scrollTop / (h.scrollHeight - h.clientHeight);
+  document.getElementById("progress").style.width = (p * 100) + "%";
+  document.getElementById("tip").style.display = "none";
+}, { passive: true });
 
 /* =========================================================
    SCROLLY 1 — creators scatter
@@ -343,9 +380,21 @@ const S1 = (() => {
                  t.append("tspan").attr("class", "sub").attr("x", bx - 12).attr("dy", 15).text("350 to 87,000 typical views"); });
 
   const cs = DATA.creators.map(d => ({ ...d, m: Math.max(d.m, 50), b: Math.max(d.b, 50), w: Math.max(d.w, 50) }));
+  const tip = d3.select("#tip");
   const dots = svg.append("g").selectAll("circle").data(cs).join("circle")
     .attr("cx", d => x(d.f)).attr("cy", d => y(d.m)).attr("r", 3)
-    .attr("fill", GRAY).attr("opacity", 0);
+    .attr("fill", GRAY).attr("opacity", 0)
+    .style("cursor", "crosshair")
+    .on("mousemove", function (e, d) {
+      if (+d3.select(this).attr("opacity") < 0.15) return;
+      tip.style("display", "block")
+        .style("left", Math.min(e.clientX + 14, window.innerWidth - 240) + "px")
+        .style("top", (e.clientY + 10) + "px")
+        .html(`<b>${fmtSI(d.f)} followers</b> · ${d.n} videos<br>` +
+              `median <b>${fmtSI(d.m)}</b> views per video<br>` +
+              `best ${fmtSI(d.b)} · worst ${fmtSI(d.w)}`);
+    })
+    .on("mouseout", () => tip.style("display", "none"));
 
   const ranges = svg.append("g").selectAll("line")
     .data(cs.filter(d => d.hl === "twofaced")).join("line")
