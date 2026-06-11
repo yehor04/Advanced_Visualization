@@ -122,7 +122,10 @@
   #roll:hover { background: #e0244a; }
   #verdict { font: 400 17px/1.6 var(--serif); margin-top: 18px; min-height: 56px; }
   #verdict b { font-weight: 700; }
-  #strip { margin-top: 6px; }
+  .strip-legend { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; margin-top: 10px;
+                  font: 500 12px/1 var(--sans); color: #444; }
+  .strip-legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: -1px; }
+  #strip { margin-top: 4px; }
 
   footer { max-width: 640px; margin: 0 auto; padding: 48px 24px 90px; color: var(--muted); border-top: 1px solid var(--line); }
   footer p { font: italic 400 14.5px/1.75 var(--serif); }
@@ -284,6 +287,12 @@
     <div class="chip-label">Dominant emotion</div><div class="chips" id="chips-emo"></div>
     <button id="roll">Post 100 videos →</button>
     <div id="verdict"></div>
+    <div class="strip-legend">
+      <span><i style="background:#d9d4cc"></i>under 1K views</span>
+      <span><i style="background:#9f9f9f"></i>1K – 1M</span>
+      <span><i style="background:var(--pink)"></i>over 1M</span>
+      <span style="color:var(--muted)">each dot = one real video</span>
+    </div>
     <svg id="strip"></svg>
   </div>
 </section>
@@ -634,13 +643,14 @@ const S3 = (() => {
   // --- waffle view ---
   const wafG = svg.append("g").attr("opacity", 0);
   const CELLS = 10, CS = 14, GAP = 3, BW = CELLS * (CS + GAP);
+  const WTOP = 200; // vertically centre the waffle block in the shared canvas
   const bandX = i => M.l + 10 + i * (BW + 30);
   const colDied = "#e7e7e7", colMid = "#9f9f9f", colBig = "#ff8aa6", colMega = PINK;
-  wafG.append("text").attr("class", "anno").attr("x", W / 2).attr("y", M.t - 26).attr("text-anchor", "middle")
+  wafG.append("text").attr("class", "anno").attr("x", W / 2).attr("y", WTOP - 44).attr("text-anchor", "middle")
     .text("100 typical videos, by the creator's follower count");
 
   DATA.lottery.bands.forEach((b, i) => {
-    const g = wafG.append("g").attr("transform", `translate(${bandX(i)}, ${M.t + 30})`);
+    const g = wafG.append("g").attr("transform", `translate(${bandX(i)}, ${WTOP})`);
     const nDied = Math.round(b.under1k), nMega = Math.max(b.over1m >= 0.5 ? 1 : 0, Math.round(b.over1m));
     const nBig = Math.max(0, Math.round(b.over100k) - nMega);
     const cells = d3.range(100).map(k => k < nDied ? colDied : k >= 100 - nMega ? colMega : k >= 100 - nMega - nBig ? colBig : colMid);
@@ -661,7 +671,7 @@ const S3 = (() => {
               `${b.over100k}% pass 100K · ${b.over1m}% pass 1M`))
       .on("mouseout", () => d3.select("#tip").style("display", "none"));
   });
-  const lg = wafG.append("g").attr("transform", `translate(${M.l + 10}, ${H - 86})`);
+  const lg = wafG.append("g").attr("transform", `translate(${M.l + 10}, ${WTOP + BW + 64})`);
   [[colDied, "flopped: under 1K views"], [colMid, "1K – 100K"], [colBig, "over 100K"], [colMega, "over 1M"]].forEach((d, i) => {
     const g = lg.append("g").attr("transform", `translate(${i * 190},0)`);
     g.append("rect").attr("width", 13).attr("height", 13).attr("rx", 2.5).attr("fill", d[0]);
@@ -754,14 +764,19 @@ const S3 = (() => {
   svg.append("text").attr("class", "ref-label").attr("x", x(641)).attr("y", 16).attr("text-anchor", "middle").text("overall median: 641");
   const dotsG = svg.append("g");
 
-  d3.select("#roll").on("click", () => {
+  const doRoll = () => {
     let pool = sb.pool;
     if (sel.topic >= 0) pool = pool.filter(r => r[0] === sel.topic);
     if (sel.dur >= 0) pool = pool.filter(r => r[1] === sel.dur);
     if (sel.emo >= 0) pool = pool.filter(r => r[2] === sel.emo);
     const verdict = d3.select("#verdict");
-    if (pool.length < 100) { verdict.html("Only " + pool.length + " real videos match this exact recipe — too few to draw 100. Loosen one filter."); return; }
-    const draw = d3.shuffle(pool.slice()).slice(0, 100).map(r => Math.max(r[3], 1));
+    if (!pool.length) {
+      dotsG.selectAll("circle").remove();
+      verdict.html("No real videos in the dataset match this exact recipe. Loosen one filter.");
+      return;
+    }
+    const take = Math.min(100, pool.length);
+    const draw = d3.shuffle(pool.slice()).slice(0, take).map(r => Math.max(r[3], 1));
     draw.sort(d3.ascending);
     const med = d3.quantile(draw, 0.5), best = d3.max(draw), died = draw.filter(v => v < 1000).length;
     const recipe = [
@@ -779,10 +794,21 @@ const S3 = (() => {
       .attr("cx", v => x(v))
       .attr("cy", (v, i) => H - 62 - (draw.slice(0, i).filter(u => Math.abs(Math.log10(u) - Math.log10(v)) < 0.07).length % 18) * 9)
       .attr("fill", v => v >= 1e6 ? PINK : v < 1000 ? "#d9d4cc" : "#9f9f9f");
-    verdict.html(`You posted 100 real videos (${recipe}). Median: <b>${fmtSI(med)} views</b>. Best: <b>${fmtSI(best)}</b>. ` +
-      `<b>${died} of 100</b> never passed 1,000 views.` +
-      (best >= 1e6 ? " You hit the jackpot — try rolling again and see if it repeats." : " No millionaire this round — that's normal. Roll again."));
-  });
+    if (take === 100) {
+      verdict.html(`You posted 100 real videos (${recipe}). Median: <b>${fmtSI(med)} views</b>. Best: <b>${fmtSI(best)}</b>. ` +
+        `<b>${died} of 100</b> never passed 1,000 views.` +
+        (best >= 1e6 ? " You hit the jackpot — try rolling again and see if it repeats." : " No millionaire this round — that's normal. Roll again."));
+    } else {
+      verdict.html(`Only <b>${pool.length}</b> real videos match this recipe (${recipe}) — here are all of them. ` +
+        `Median: <b>${fmtSI(med)} views</b>. Best: <b>${fmtSI(best)}</b>. <b>${died} of ${take}</b> never passed 1,000 views.`);
+    }
+  };
+  d3.select("#roll").on("click", doRoll);
+  // first roll happens automatically when the section scrolls into view
+  new IntersectionObserver((entries, obs) => {
+    if (!entries.some(e => e.isIntersecting)) return;
+    obs.disconnect(); doRoll();
+  }, { threshold: 0.35 }).observe(document.querySelector("#sandbox"));
 })();
 
 /* =========================================================
