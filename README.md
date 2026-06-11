@@ -3,7 +3,7 @@
 **Live page: https://yehor04.github.io/Advanced_Visualization/**
 
 A scrollytelling data story built for Assignment 3 of *Advanced Interactive Visualization*
-(JKU Linz, June 2026) by **Group 4**: Yehor Larcenko, Olha Rybak, Ivanna Pshenychna, Davyd Pizhuk.
+(JKU Linz, June 2026) by **Group 4**: Yehor Larchenko, Olha Rybak, Ivanna Pshenychna, Davyd Pizhuk.
 
 We follow 209,543 TikTok videos from 1,872 creators — each tracked day by day for 30 days
 after posting — and ask one question: does follower count actually buy you views?
