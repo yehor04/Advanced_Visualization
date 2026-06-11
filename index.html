@@ -134,11 +134,16 @@
   footer p { margin: 0 0 14px; }
 
   @media (max-width: 880px) {
-    .scrolly { flex-direction: column; }
-    .scrolly article { max-width: none; flex: none; }
-    .scrolly figure { height: 70vh; flex-direction: column; }
-    .step { min-height: 70vh; }
-    .chart-head { position: static; max-width: none; padding: 10px 4px 0; }
+    .scrolly { flex-direction: column; padding: 0 12px; }
+    .scrolly article { max-width: none; flex: none; z-index: 2; }
+    /* chart pins to the top of the screen; cards scroll beneath it */
+    .scrolly figure { order: -1; height: 54vh; flex-direction: column; justify-content: flex-start;
+                      background: #fff; z-index: 1; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+    .scrolly figure svg { max-height: calc(54vh - 64px); }
+    .step { min-height: 58vh; justify-content: center; opacity: 1; }
+    .step .card { max-width: 420px; margin: 0 auto; background: #fff; box-shadow: 0 4px 18px rgba(0,0,0,0.12); }
+    .chart-head { position: static; max-width: none; padding: 10px 8px 4px; }
+    .chart-head .d { font-size: 11.5px; }
   }
 </style>
 </head>
