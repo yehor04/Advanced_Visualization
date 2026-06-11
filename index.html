@@ -325,7 +325,8 @@
 <footer>
   <h4>About this story</h4>
   <p>Data: <a href="https://huggingface.co/datasets/lingbow/tiktok-video-engagement-200k">lingbow/tiktok-video-engagement-200k</a> (CC&nbsp;BY-NC&nbsp;4.0) — 209,543 TikTok videos by 1,872 creators, posted 24&nbsp;June – 9&nbsp;November 2024, with daily engagement and follower panels. Views = cumulative play count on the last observed day. Lifelines use the 73,940 videos tracked for ≥30 days. Creator follower counts are averaged over the observation window; creator-level charts include creators with ≥5 videos. Medians are used throughout because of the extreme skew. Topic and emotion labels are model-derived by the dataset authors; engagement numbers are platform data.</p>
-  <p>Built with D3.js and Scrollama for Assignment 3, Advanced Interactive Visualization, JKU Linz. Source on <a href="#">GitHub</a>.</p>
+  <p>* The simulator's earnings line is a labelled hypothetical, not a measurement. TikTok doesn't publish payout rates; creators report roughly <a href="https://www.shortformcreator.com/guides/tiktok-creator-rewards-program-2025">$0.40–$1.00 per 1,000 qualified views</a> in the US Creator Rewards Program, which requires 10,000+ followers, 100,000 views in the last 30 days, an eligible region, and — crucially — videos of at least one minute. Our dataset has no region data, raw play counts overstate "qualified" views, and most creator income comes from brand deals rather than the program. Treat the dollar range as an order of magnitude.</p>
+  <p>Built with D3.js and Scrollama for Assignment 3, Advanced Interactive Visualization, JKU Linz. Source on <a href="https://github.com/yehor04/Advanced_Visualization">GitHub</a>.</p>
 </footer>
 
 <script>
@@ -816,9 +817,18 @@ const S3 = (() => {
       return;
     }
     const take = Math.min(100, pool.length);
-    const draw = d3.shuffle(pool.slice()).slice(0, take).map(r => Math.max(r[3], 1));
+    const picked = d3.shuffle(pool.slice()).slice(0, take);
+    const draw = picked.map(r => Math.max(r[3], 1));
     draw.sort(d3.ascending);
     const med = d3.quantile(draw, 0.5), best = d3.max(draw), died = draw.filter(v => v < 1000).length;
+    // hypothetical Creator Rewards earnings: only videos >= 1 min qualify (dur buckets 3, 4);
+    // reported US rates ~$0.40-$1.00 per 1,000 qualified views — see About this story
+    const qualViews = d3.sum(picked.filter(r => r[1] >= 3), r => r[3]);
+    const nQual = picked.filter(r => r[1] >= 3).length;
+    const fmt$ = v => v >= 100 ? "$" + Math.round(v).toLocaleString() : "$" + v.toFixed(2);
+    const moneyLine = nQual === 0
+      ? `<br><span style="color:var(--muted)">Money? All ${take} are under one minute — <b>$0</b> under TikTok's Creator Rewards Program, no matter the views.*</span>`
+      : `<br><span style="color:var(--muted)">Money? If this were an eligible US account: your ${nQual} video${nQual > 1 ? "s" : ""} over one minute would be worth roughly <b>${fmt$(qualViews * 0.0004)}–${fmt$(qualViews * 0.001)}</b> — the other ${take - nQual} earn <b>$0</b>, regardless of views.*</span>`;
     const recipe = [
       sel.topic >= 0 ? niceTopic(sb.topics[sel.topic]) : "any topic",
       sel.dur >= 0 ? sb.durations[sel.dur] : "any length",
@@ -837,10 +847,12 @@ const S3 = (() => {
     if (take === 100) {
       verdict.html(`You posted 100 real videos (${recipe}). Median: <b>${fmtSI(med)} views</b>. Best: <b>${fmtSI(best)}</b>. ` +
         `<b>${died} of 100</b> never passed 1,000 views.` +
-        (best >= 1e6 ? " You hit the jackpot — try rolling again and see if it repeats." : " No millionaire this round — that's normal. Roll again."));
+        (best >= 1e6 ? " You hit the jackpot — try rolling again and see if it repeats." : " No millionaire this round — that's normal. Roll again.") +
+        moneyLine);
     } else {
       verdict.html(`Only <b>${pool.length}</b> real videos match this recipe (${recipe}) — here are all of them. ` +
-        `Median: <b>${fmtSI(med)} views</b>. Best: <b>${fmtSI(best)}</b>. <b>${died} of ${take}</b> never passed 1,000 views.`);
+        `Median: <b>${fmtSI(med)} views</b>. Best: <b>${fmtSI(best)}</b>. <b>${died} of ${take}</b> never passed 1,000 views.` +
+        moneyLine);
     }
   };
   d3.select("#roll").on("click", doRoll);
