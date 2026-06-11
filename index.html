@@ -68,7 +68,7 @@
   /* ---------- scrolly layout ---------- */
   .scrolly { position: relative; display: flex; max-width: 1280px; margin: 0 auto; padding: 0 24px; }
   .scrolly article { position: relative; flex: 0 0 320px; max-width: 320px; z-index: 2; }
-  .scrolly figure { position: sticky; top: 0; flex: 1; height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center; }
+  .scrolly figure { position: sticky; top: 0; flex: 1; height: 96vh; margin: 0; display: flex; align-items: center; justify-content: center; }
   .chart-head { position: absolute; top: 4.5vh; left: clamp(16px, 7%, 80px); max-width: 320px; z-index: 1; }
   .chart-head .t { font: 700 17px/1.3 var(--display); }
   .chart-head .d { font: 400 12.5px/1.5 var(--sans); color: var(--muted); margin-top: 3px; }
@@ -206,7 +206,6 @@
     <div class="step" data-step="4"><div class="card">
       <p>And size protects no one. This account has <b>2.4 million followers</b> — and posts videos that die under <b>1,000 views</b>.</p>
       <p>Followers set your starting odds. The algorithm rolls the dice anyway.</p></div></div>
-    <div class="spacer-half"></div>
   </article>
   <figure>
     <div class="chart-head"><div class="t">1,872 creators, by audience and typical views</div>
@@ -236,7 +235,6 @@
     <div class="step" data-step="3"><div class="card"><span class="n" style="color:var(--ink)">THE FLOP</span>
       <p>But this is the line to remember, because it's the typical one. Half of all videos end their month below <b>641 views</b>.</p>
       <p>The hits you just saw are the lottery's advertising. This is the ticket most people hold.</p></div></div>
-    <div class="spacer-half"></div>
   </article>
   <figure>
     <div class="chart-head"><div class="t">1,183 videos, 30 days each</div>
@@ -264,7 +262,6 @@
       <p>So do followers matter or not? Both. Each grid is <b>100 typical videos</b>, grouped by the creator's audience size.</p>
       <p>Under 10K followers, <b>88 of 100</b> videos die below 1,000 views. Above 1M, the typical video still reaches only ~91,000 — and <b>1 in 100 still flops completely</b>.</p>
       <p>Followers buy you more tickets. They don't buy the prize.</p></div></div>
-    <div class="spacer-half"></div>
   </article>
   <figure>
     <div class="chart-head"><div class="t">The payout table</div>
@@ -655,7 +652,7 @@ const S3 = (() => {
   // --- waffle view ---
   const wafG = svg.append("g").attr("opacity", 0).attr("pointer-events", "none");
   const CELLS = 10, CS = 14, GAP = 3, BW = CELLS * (CS + GAP);
-  const WTOP = 200; // vertically centre the waffle block in the shared canvas
+  const WTOP = 215; // vertically centre the waffle block in the shared canvas
   const bandX = i => M.l + 10 + i * (BW + 30);
   const colDied = "#e7e7e7", colMid = "#9f9f9f", colBig = "#ff8aa6", colMega = PINK;
   wafG.append("text").attr("class", "anno").attr("x", W / 2).attr("y", WTOP - 44).attr("text-anchor", "middle")
