@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The TikTok Lottery — why followers don't buy you views</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://unpkg.com/scrollama"></script>
+<style>
+  :root {
+    --ink: #121212; --muted: #6b6b6b; --faint: #c9c9c9; --line: #e6e6e6;
+    --pink: #fe2c55; --pink-soft: #ffa3b8; --teal: #00808f; --bg: #ffffff;
+    --serif: "Source Serif 4", Georgia, serif;
+    --sans: "Inter", -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; }
+
+  /* ---------- hero ---------- */
+  header.hero { max-width: 720px; margin: 0 auto; padding: 96px 24px 24px; text-align: center; }
+  .kicker { font: 600 12px/1 var(--sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--pink); }
+  h1 { font: 700 clamp(40px, 7vw, 68px)/1.05 var(--serif); margin: 18px 0 14px; letter-spacing: -0.01em; }
+  .dek { font: 400 clamp(18px, 2.4vw, 22px)/1.5 var(--serif); color: #3c3c3c; margin: 0 auto 26px; max-width: 600px; }
+  .byline { font: 500 13px/1.6 var(--sans); color: var(--muted); }
+  .byline b { color: var(--ink); font-weight: 600; }
+  .hero-rule { width: 56px; height: 3px; background: var(--ink); margin: 34px auto 0; }
+
+  /* ---------- prose ---------- */
+  .prose { max-width: 640px; margin: 0 auto; padding: 44px 24px; }
+  .prose p { font: 400 18px/1.75 var(--serif); margin: 0 0 22px; }
+  .prose .lead::first-letter { font: 700 54px/0.9 var(--serif); float: left; padding: 6px 10px 0 0; }
+  .part { font: 600 12px/1 var(--sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin: 26px 0 8px; }
+  .part b { color: var(--pink); }
+  h2 { font: 700 clamp(26px, 4vw, 34px)/1.2 var(--serif); margin: 0 0 18px; }
+  .prose strong { font-weight: 600; }
+
+  /* ---------- scrolly layout ---------- */
+  .scrolly { position: relative; display: flex; max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+  .scrolly article { position: relative; flex: 0 0 320px; max-width: 320px; z-index: 2; }
+  .scrolly figure { position: sticky; top: 0; flex: 1; height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center; }
+  .scrolly figure svg { width: 100%; height: auto; max-height: 94vh; }
+  .step { min-height: 85vh; display: flex; align-items: center; opacity: 0.25; transition: opacity 0.3s; }
+  .step.is-active { opacity: 1; }
+  .step .card { background: #fff; border: 1px solid var(--line); border-left: 3px solid var(--ink);
+                padding: 18px 20px; box-shadow: 0 2px 14px rgba(0,0,0,0.05); }
+  .step .card p { font: 400 16px/1.65 var(--serif); margin: 0; }
+  .step .card p + p { margin-top: 10px; }
+  .step .card .n { font: 700 13px/1 var(--sans); color: var(--pink); letter-spacing: 0.1em; display: block; margin-bottom: 9px; }
+  .step .card b { font-weight: 600; }
+  .spacer-half { height: 12vh; }
+
+  /* ---------- chart text ---------- */
+  .axis text { font: 500 11.5px var(--sans); fill: var(--muted); }
+  .axis line, .axis path { stroke: var(--line); }
+  .axis-title { font: 600 11px var(--sans); fill: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .anno { font: 600 13px/1.35 var(--sans); fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round; }
+  .anno .sub { font-weight: 400; fill: var(--muted); }
+  .ref-label { paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round; }
+  .anno-line { stroke: var(--ink); stroke-width: 1; fill: none; }
+  .ref-label { font: 600 11px var(--sans); fill: var(--muted); }
+
+  /* ---------- movers ---------- */
+  #movers .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 28px; max-width: 1140px; margin: 0 auto; padding: 10px 24px 30px; }
+  .mover { border-top: 2px solid var(--ink); padding-top: 14px; }
+  .mover h3 { font: 700 21px/1.25 var(--serif); margin: 0 0 4px; }
+  .mover .sub { font: 400 14px/1.5 var(--sans); color: var(--muted); margin: 0 0 12px; }
+  .mover svg { width: 100%; height: auto; }
+  .mover .bar-label { font: 500 12px var(--sans); fill: var(--ink); }
+  .mover .bar-val { font: 600 12px var(--sans); fill: var(--ink); }
+  .mover .bar-val.in { fill: #fff; }
+
+  /* ---------- sandbox ---------- */
+  #sandbox { background: #faf9f7; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 64px 24px 72px; margin-top: 60px; }
+  #sandbox .inner { max-width: 860px; margin: 0 auto; }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 6px 0 18px; }
+  .chip { font: 500 13px/1 var(--sans); padding: 8px 13px; border: 1px solid #d8d4cd; border-radius: 999px;
+          background: #fff; cursor: pointer; user-select: none; transition: all 0.12s; }
+  .chip:hover { border-color: var(--ink); }
+  .chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .chip-label { font: 600 11px/1 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-top: 16px; }
+  #roll { font: 600 15px/1 var(--sans); background: var(--pink); color: #fff; border: none; border-radius: 8px;
+          padding: 14px 26px; cursor: pointer; margin-top: 8px; }
+  #roll:hover { background: #e0244a; }
+  #verdict { font: 400 17px/1.6 var(--serif); margin-top: 18px; min-height: 56px; }
+  #verdict b { font-weight: 700; }
+  #strip { margin-top: 6px; }
+
+  footer { max-width: 640px; margin: 0 auto; padding: 56px 24px 90px; font: 400 13.5px/1.8 var(--sans); color: var(--muted); }
+  footer h4 { font: 700 15px var(--sans); color: var(--ink); margin: 0 0 8px; }
+  footer a { color: var(--teal); }
+  footer p { margin: 0 0 14px; }
+
+  @media (max-width: 880px) {
+    .scrolly { flex-direction: column; }
+    .scrolly article { max-width: none; flex: none; }
+    .scrolly figure { height: 70vh; }
+    .step { min-height: 70vh; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="kicker">209,543 videos &middot; 1,872 creators &middot; one algorithm</div>
+  <h1>The TikTok Lottery</h1>
+  <p class="dek">A creator with 28 million followers posts a video. So does an account almost nobody follows. Thirty days later, the nobody has eight million views. This is not a fluke — it's how the platform works.</p>
+  <div class="byline"><b>Group 4</b> &middot; Yehor Larcenko, Olha, Ivanna, Davyd<br>Advanced Interactive Visualization &middot; JKU Linz &middot; June 2026</div>
+  <div class="hero-rule"></div>
+</header>
+
+<section class="prose">
+  <p class="lead">On most platforms, audience is destiny. A newspaper with a million subscribers reaches a million readers; a TV channel's ratings move slowly, year by year. TikTok made a different bet: every video, from anyone, starts almost from zero, and the algorithm decides who sees it next.</p>
+  <p>To see what that bet means in practice, we followed <strong>209,543 videos</strong> posted by 1,872 creators between June and November 2024 — every video tracked day by day for a month after posting, alongside each creator's follower count.</p>
+  <p>Let's start with the biggest account in the data.</p>
+</section>
+
+<section class="scrolly" id="scrolly1">
+  <article>
+    <div class="spacer-half"></div>
+    <div class="step" data-step="0"><div class="card"><span class="n">PART 1 · THE GIANT</span>
+      <p>This account has <b>28.2 million followers</b> — the largest in our data. Its median video collects 1.3&thinsp;million views.</p>
+      <p>So far, audience looks like destiny.</p></div></div>
+    <div class="step" data-step="1"><div class="card">
+      <p>If TikTok worked like television — every follower sees every post — accounts would line up along this line.</p>
+      <p>Keep it in mind. You're about to watch it stop mattering.</p></div></div>
+    <div class="step" data-step="2"><div class="card">
+      <p>Here are <b>all 1,872 creators</b>. The cloud leans upward, so followers aren't worthless. But look at the vertical spread:</p>
+      <p>at the <b>same</b> follower count, typical views differ by a factor of <b>100 or more</b>.</p></div></div>
+    <div class="step" data-step="3"><div class="card">
+      <p>Each line spans one creator's <b>worst to best</b> video. This account has 166,000 followers and posted 15 videos: thirteen stalled below 50,000 views.</p>
+      <p>The other two? <b>11.6 and 11.7 million.</b> Same account, same month, same audience.</p></div></div>
+    <div class="step" data-step="4"><div class="card">
+      <p>And size protects no one. This account has <b>2.4 million followers</b> — and posts videos that die under <b>1,000 views</b>.</p>
+      <p>Followers set your starting odds. The algorithm rolls the dice anyway.</p></div></div>
+    <div class="spacer-half"></div>
+  </article>
+  <figure><svg id="svg1"></svg></figure>
+</section>
+
+<section class="prose">
+  <div class="part"><b>Part 2</b> · 30 days in the machine</div>
+  <h2>The first week decides almost everything — except when it doesn't</h2>
+  <p>Follower counts are a creator's story. Each video has its own. We took every video with a full 30-day history and traced how its views accumulated, day by day, from the moment of posting.</p>
+</section>
+
+<section class="scrolly" id="scrolly2">
+  <article>
+    <div class="spacer-half"></div>
+    <div class="step" data-step="0"><div class="card">
+      <p>Every line is <b>one video's first month</b>, drawn from a sample of 1,183 (note the log scale).</p>
+      <p>Most of the action happens in days 0–7; after that, the curves go flat.</p></div></div>
+    <div class="step" data-step="1"><div class="card"><span class="n">THE OVERNIGHT HIT</span>
+      <p>On November 4th, an account with <b>14,000 followers</b> posted a cooking video. Four million views in the first week. <b>8.4 million</b> by day 30.</p>
+      <p>That's 600 views for every single follower.</p></div></div>
+    <div class="step" data-step="2"><div class="card"><span class="n">THE SLOW BURNER</span>
+      <p>This video was dead on arrival: <b>1,245 views after an entire week</b>.</p>
+      <p>Then the algorithm changed its mind. By day 30: <b>12.9 million</b>. Nobody — including its creator — can plan this.</p></div></div>
+    <div class="step" data-step="3"><div class="card"><span class="n">THE FLOP</span>
+      <p>But this is the line to remember, because it's the typical one. Half of all videos end their month below <b>641 views</b>.</p>
+      <p>The hits you just saw are the lottery's advertising. This is the ticket most people hold.</p></div></div>
+    <div class="spacer-half"></div>
+  </article>
+  <figure><svg id="svg2"></svg></figure>
+</section>
+
+<section class="prose">
+  <div class="part"><b>Part 3</b> · The payout table</div>
+  <h2>One percent of videos takes two-thirds of everything</h2>
+  <p>Lotteries are defined by their payout tables. Here is TikTok's, computed across all 209,543 videos.</p>
+</section>
+
+<section class="scrolly" id="scrolly3">
+  <article>
+    <div class="spacer-half"></div>
+    <div class="step" data-step="0"><div class="card">
+      <p>The distribution of final view counts. The <b>median video gets 641 views</b>; the <b>average is 31,600</b> — fifty times higher, dragged up by a handful of monsters on the right.</p>
+      <p>Whenever a mean is 50&times; the median, you're looking at a lottery.</p></div></div>
+    <div class="step" data-step="1"><div class="card">
+      <p>The pink tail is the <b>top 1%</b> of videos.</p>
+      <p>Those 2,095 videos collected <b>64% of all views</b> in the dataset. The remaining 207,448 videos shared the rest.</p></div></div>
+    <div class="step" data-step="2"><div class="card">
+      <p>So do followers matter or not? Both. Each grid is <b>100 typical videos</b>, grouped by the creator's audience size.</p>
+      <p>Under 10K followers, <b>88 of 100</b> videos die below 1,000 views. Above 1M, the typical video still reaches only ~91,000 — and <b>1 in 100 still flops completely</b>.</p>
+      <p>Followers buy you more tickets. They don't buy the prize.</p></div></div>
+    <div class="spacer-half"></div>
+  </article>
+  <figure><svg id="svg3"></svg></figure>
+</section>
+
+<section class="prose" id="movers-intro">
+  <div class="part"><b>Part 4</b> · Loading the dice</div>
+  <h2>What actually moves the odds</h2>
+  <p>If virality is a lottery, content choices are how you load the dice. We compared median outcomes across what a creator controls: topic, length, emotional tone, and whether the video was AI-generated. The differences are real — and smaller than anyone selling a "viral formula" admits.</p>
+</section>
+<section id="movers"><div class="grid"></div></section>
+
+<section class="prose">
+  <div class="part"><b>Part 5</b> · Your turn</div>
+  <h2>Post 100 videos</h2>
+  <p>Pick a recipe. We'll draw 100 <strong>real videos</strong> matching it from the dataset and show you where they landed after 30 days. Roll as often as you like — that's rather the point.</p>
+</section>
+
+<section id="sandbox">
+  <div class="inner">
+    <div class="chip-label">Topic</div><div class="chips" id="chips-topic"></div>
+    <div class="chip-label">Length</div><div class="chips" id="chips-dur"></div>
+    <div class="chip-label">Dominant emotion</div><div class="chips" id="chips-emo"></div>
+    <button id="roll">Post 100 videos →</button>
+    <div id="verdict"></div>
+    <svg id="strip"></svg>
+  </div>
+</section>
+
+<section class="prose">
+  <p>The machine that promised to free creators from the tyranny of follower counts replaced it with something stranger: a system where a cooking video from nowhere outdraws a 28-million-follower account, where a dead video resurrects itself in week two, and where the only reliable strategy is the lottery player's strategy — buy more tickets.</p>
+  <p>Half of everything posted disappears under a thousand views. One percent takes two-thirds of the prize pool. And six hundred thousand new tickets get printed every day.</p>
+</section>
+
+<footer>
+  <h4>Methods &amp; data</h4>
+  <p>Data: <a href="https://huggingface.co/datasets/lingbow/tiktok-video-engagement-200k">lingbow/tiktok-video-engagement-200k</a> (CC&nbsp;BY-NC&nbsp;4.0) — 209,543 TikTok videos by 1,872 creators, posted 24&nbsp;June – 9&nbsp;November 2024, with daily engagement and follower panels. Views = cumulative play count on the last observed day. Lifelines use the 73,940 videos tracked for ≥30 days. Creator follower counts are averaged over the observation window; creator-level charts include creators with ≥5 videos. Medians are used throughout because of the extreme skew. Topic and emotion labels are model-derived by the dataset authors; engagement numbers are platform data.</p>
+  <p>Built with D3.js and Scrollama for Assignment 3, Advanced Interactive Visualization, JKU Linz. Source on <a href="#">GitHub</a>.</p>
+</footer>
+
+<script>
+const DATA = __DATA__;
+
+const PINK = "#fe2c55", TEAL = "#00808f", INKC = "#121212", GRAY = "#c9c9c9";
+const fmtSI = x => d3.format(".2s")(x).replace("G", "B").replace("k", "K").replace(/\.0([KMB])/, "$1");
+const NICE = { Sports_Fitness: "Sports & fitness", Cooking_Food: "Cooking & food", Shopping_Products: "Shopping",
+               Others: "Others", Movies_TV_Books: "Movies & TV", Beauty_Fashion: "Beauty & fashion",
+               Lifestyle: "Lifestyle", Dance_Music: "Dance & music", Life_hacks_Personal_growth: "Life hacks" };
+const LOGTICKS = [1, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7];
+const logFmt = d => ({1:"1",10:"10",100:"100",1000:"1K",1e4:"10K",1e5:"100K",1e6:"1M",1e7:"10M",1e8:"100M"})[d] || "";
+
+function svgSetup(sel, W, H) {
+  return d3.select(sel).attr("viewBox", `0 0 ${W} ${H}`).attr("width", null);
+}
+function axisTitle(svg, x, y, text, anchor = "middle", rotate = false) {
+  svg.append("text").attr("class", "axis-title").attr("x", x).attr("y", y)
+    .attr("text-anchor", anchor)
+    .attr("transform", rotate ? `rotate(-90 ${x} ${y})` : null).text(text);
+}
+
+/* =========================================================
+   SCROLLY 1 — creators scatter
+   ========================================================= */
+const S1 = (() => {
+  const W = 860, H = 640, M = { t: 46, r: 30, b: 56, l: 64 };
+  const svg = svgSetup("#svg1", W, H);
+  const x = d3.scaleLog().domain([800, 4e7]).range([M.l, W - M.r]);
+  const y = d3.scaleLog().domain([40, 6e6]).range([H - M.b, M.t]);
+
+  svg.append("g").attr("class", "axis").attr("transform", `translate(0,${H - M.b})`)
+    .call(d3.axisBottom(x).tickValues(LOGTICKS.filter(t => t >= 1000)).tickFormat(logFmt).tickSize(-(H - M.t - M.b)))
+    .call(g => g.select(".domain").remove());
+  svg.append("g").attr("class", "axis").attr("transform", `translate(${M.l},0)`)
+    .call(d3.axisLeft(y).tickValues(LOGTICKS.filter(t => t >= 100 && t <= 1e6)).tickFormat(logFmt).tickSize(-(W - M.l - M.r)))
+    .call(g => g.select(".domain").remove());
+  axisTitle(svg, (M.l + W - M.r) / 2, H - 14, "Followers");
+  axisTitle(svg, 16, (M.t + H - M.b) / 2, "Median views per video", "middle", true);
+
+  // "TV line": views = followers
+  const tv = svg.append("g").attr("opacity", 0);
+  const x1 = Math.max(800, y.invert(H - M.b)), x2 = Math.min(4e7, 6e6);
+  tv.append("line").attr("x1", x(x1)).attr("y1", y(x1)).attr("x2", x(x2)).attr("y2", y(x2))
+    .attr("stroke", INKC).attr("stroke-dasharray", "5 4").attr("stroke-width", 1.4);
+  tv.append("text").attr("class", "ref-label")
+    .attr("x", x(2.2e5)).attr("y", y(2.2e5) - 12).attr("transform", `rotate(-31 ${x(2.2e5)} ${y(2.2e5) - 12})`)
+    .text("if every follower watched every video");
+
+  // vertical "spread" bracket for step 2
+  const spreadG = svg.append("g").attr("opacity", 0);
+  const bx = x(1.3e5);
+  spreadG.append("line").attr("x1", bx).attr("x2", bx).attr("y1", y(700)).attr("y2", y(7e4))
+    .attr("stroke", INKC).attr("stroke-width", 1.6);
+  [700, 7e4].forEach(v => spreadG.append("line")
+    .attr("x1", bx - 5).attr("x2", bx + 5).attr("y1", y(v)).attr("y2", y(v))
+    .attr("stroke", INKC).attr("stroke-width", 1.6));
+  spreadG.append("text").attr("class", "anno").attr("x", bx - 12).attr("y", y(8000)).attr("text-anchor", "end")
+    .call(t => { t.append("tspan").text("same followers,");
+                 t.append("tspan").attr("class", "sub").attr("x", bx - 12).attr("dy", 15).text("views 100× apart"); });
+
+  const cs = DATA.creators.map(d => ({ ...d, m: Math.max(d.m, 50), b: Math.max(d.b, 50), w: Math.max(d.w, 50) }));
+  const dots = svg.append("g").selectAll("circle").data(cs).join("circle")
+    .attr("cx", d => x(d.f)).attr("cy", d => y(d.m)).attr("r", 3)
+    .attr("fill", GRAY).attr("opacity", 0);
+
+  const ranges = svg.append("g").selectAll("line")
+    .data(cs.filter(d => d.hl === "twofaced")).join("line")
+    .attr("x1", d => x(d.f)).attr("x2", d => x(d.f))
+    .attr("y1", d => y(d.w)).attr("y2", d => y(d.b))
+    .attr("stroke", TEAL).attr("stroke-width", 2.5).attr("opacity", 0);
+
+  const annoG = svg.append("g");
+  function annotate(items) {
+    const a = annoG.selectAll("g").data(items, d => d.id);
+    a.exit().remove();
+    const e = a.enter().append("g").attr("opacity", 0);
+    e.append("line").attr("class", "anno-line");
+    e.append("text").attr("class", "anno");
+    const all = e.merge(a);
+    all.select("line")
+      .attr("x1", d => d.x).attr("y1", d => d.y).attr("x2", d => d.x + d.dx * 0.55).attr("y2", d => d.y + d.dy * 0.6);
+    all.select("text")
+      .attr("x", d => d.x + d.dx).attr("y", d => d.y + d.dy)
+      .attr("text-anchor", d => d.anchor || "start")
+      .each(function (d) {
+        const t = d3.select(this); t.selectAll("tspan").remove();
+        d.lines.forEach((ln, i) => t.append("tspan")
+          .attr("x", d.x + d.dx).attr("dy", i ? 15 : 4).attr("class", i ? "sub" : null).text(ln));
+      });
+    all.transition().duration(450).attr("opacity", 1);
+    e.attr("opacity", 0).transition().duration(450).attr("opacity", 1);
+  }
+
+  const giant = cs.find(d => d.hl === "giant"), two = cs.find(d => d.hl === "twofaced"), flopC = cs.find(d => d.hl === "bigflop");
+
+  const giantAnno = { id: "g", x: x(giant.f), y: y(giant.m), dx: -24, dy: -62, anchor: "end",
+                      lines: ["28.2M followers", "median video: 1.3M views"] };
+  const steps = [
+    () => { // 0 giant only
+      tv.transition().duration(400).attr("opacity", 0);
+      spreadG.transition().duration(400).attr("opacity", 0);
+      ranges.transition().duration(400).attr("opacity", 0);
+      dots.transition().duration(500)
+        .attr("opacity", d => d.hl === "giant" ? 1 : 0)
+        .attr("r", d => d.hl === "giant" ? 9 : 3)
+        .attr("fill", d => d.hl === "giant" ? PINK : GRAY);
+      annotate([giantAnno]);
+    },
+    () => { // 1 TV line
+      tv.transition().duration(600).attr("opacity", 1);
+      spreadG.transition().duration(400).attr("opacity", 0);
+      dots.transition().duration(500).attr("opacity", d => d.hl === "giant" ? 1 : 0);
+      annotate([giantAnno]);
+    },
+    () => { // 2 everyone
+      tv.transition().duration(400).attr("opacity", 0.5);
+      spreadG.transition().duration(600).delay(300).attr("opacity", 1);
+      ranges.transition().duration(400).attr("opacity", 0);
+      dots.transition().duration(700)
+        .attr("opacity", d => d.hl === "giant" ? 1 : 0.5)
+        .attr("r", d => d.hl === "giant" ? 7 : 3)
+        .attr("fill", d => d.hl === "giant" ? PINK : GRAY)
+        .attr("cy", d => y(d.m));
+      annotate([]);
+    },
+    () => { // 3 two-faced
+      tv.transition().duration(400).attr("opacity", 0.25);
+      spreadG.transition().duration(400).attr("opacity", 0);
+      dots.transition().duration(500)
+        .attr("opacity", d => d.hl === "twofaced" ? 1 : 0.18)
+        .attr("r", d => d.hl === "twofaced" ? 6 : 3)
+        .attr("fill", d => d.hl === "twofaced" ? TEAL : GRAY);
+      ranges.transition().duration(700).attr("opacity", 1);
+      annotate([
+        { id: "best", x: x(two.f), y: y(two.b), dx: 26, dy: -8, lines: ["best video: 11.7M"] },
+        { id: "worst", x: x(two.f), y: y(two.w), dx: 26, dy: 16, lines: ["worst: " + fmtSI(two.w), "166K followers, 15 videos"] },
+      ]);
+    },
+    () => { // 4 big flop
+      ranges.transition().duration(400).attr("opacity", 0.4);
+      dots.transition().duration(500)
+        .attr("opacity", d => d.hl ? 1 : 0.18)
+        .attr("r", d => d.hl ? 6.5 : 3)
+        .attr("fill", d => d.hl === "bigflop" ? PINK : d.hl === "giant" ? INKC : d.hl === "twofaced" ? TEAL : GRAY);
+      annotate([
+        { id: "bf", x: x(flopC.f), y: y(flopC.m), dx: -10, dy: 66, anchor: "end",
+          lines: ["2.4M followers —", "and videos under 1K views"] },
+        { id: "g2", x: x(giant.f), y: y(giant.m), dx: -130, dy: -46, lines: ["the 28M giant"] },
+      ]);
+    },
+  ];
+  return { steps };
+})();
+
+/* =========================================================
+   SCROLLY 2 — lifelines
+   ========================================================= */
+const S2 = (() => {
+  const W = 860, H = 640, M = { t: 50, r: 175, b: 56, l: 64 };
+  const svg = svgSetup("#svg2", W, H);
+  const x = d3.scaleLinear().domain([0, 30]).range([M.l, W - M.r]);
+  const y = d3.scaleLog().domain([1, 5e7]).range([H - M.b, M.t]);
+
+  svg.append("g").attr("class", "axis").attr("transform", `translate(0,${H - M.b})`)
+    .call(d3.axisBottom(x).tickValues([0, 7, 14, 21, 30]).tickSize(-(H - M.t - M.b)))
+    .call(g => g.select(".domain").remove());
+  svg.append("g").attr("class", "axis").attr("transform", `translate(${M.l},0)`)
+    .call(d3.axisLeft(y).tickValues(LOGTICKS).tickFormat(logFmt).tickSize(-(W - M.l - M.r)))
+    .call(g => g.select(".domain").remove());
+  axisTitle(svg, (M.l + W - M.r) / 2, H - 14, "Days since posting");
+  axisTitle(svg, 16, (M.t + H - M.b) / 2, "Cumulative views (log)", "middle", true);
+
+  const line = d3.line().x((v, i) => x(i)).y(v => y(Math.max(v, 1))).curve(d3.curveMonotoneX);
+  const base = svg.append("g"), hlG = svg.append("g"), annoG = svg.append("g");
+
+  base.selectAll("path").data(DATA.lifelines.filter(d => !d.hl)).join("path")
+    .attr("d", d => line(d.v)).attr("fill", "none")
+    .attr("stroke", "#9a9a9a").attr("stroke-width", 0.7).attr("opacity", 0.14);
+
+  const HL = { winner: { c: PINK, label: ["The overnight hit", "8.4M views, 14K followers"] },
+               slowburn: { c: TEAL, label: ["The slow burner", "dead for a week → 12.9M"] },
+               flop: { c: INKC, label: ["The typical video", "half end below 641 views"] } };
+  const hls = DATA.lifelines.filter(d => d.hl);
+  const hlPaths = hlG.selectAll("path").data(hls).join("path")
+    .attr("d", d => line(d.v)).attr("fill", "none")
+    .attr("stroke", d => HL[d.hl].c).attr("stroke-width", 2.8).attr("opacity", 0);
+
+  function showHl(keys, dim) {
+    base.transition().duration(400).attr("opacity", dim ? 0.45 : 1);
+    hlPaths.transition().duration(500).attr("opacity", d => keys.includes(d.hl) ? 1 : 0);
+    const items = hls.filter(d => keys.includes(d.hl)).map(d => {
+      const last = d.v[30];
+      return { id: d.hl, x: x(30) + 6, y: y(Math.max(last, 1)), c: HL[d.hl].c, lines: HL[d.hl].label };
+    });
+    // push overlapping labels apart
+    items.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < items.length; i++)
+      if (items[i].y - items[i - 1].y < 40) items[i].y = items[i - 1].y + 40;
+    const a = annoG.selectAll("g").data(items, d => d.id);
+    a.exit().transition().duration(300).attr("opacity", 0).remove();
+    const e = a.enter().append("g").attr("opacity", 0);
+    e.append("text").attr("class", "anno");
+    e.merge(a).select("text")
+      .attr("x", d => d.x).attr("y", d => d.y).attr("fill", d => d.c)
+      .each(function (d) {
+        const t = d3.select(this); t.selectAll("tspan").remove();
+        d.lines.forEach((ln, i) => t.append("tspan")
+          .attr("x", d.x).attr("dy", i ? 14 : 4).attr("class", i ? "sub" : null)
+          .attr("fill", i ? null : d.c).text(ln));
+      });
+    e.transition().duration(450).attr("opacity", 1);
+  }
+  const steps = [
+    () => showHl([], false),
+    () => showHl(["winner"], true),
+    () => showHl(["winner", "slowburn"], true),
+    () => showHl(["winner", "slowburn", "flop"], true),
+  ];
+  return { steps };
+})();
+
+/* =========================================================
+   SCROLLY 3 — histogram + waffles
+   ========================================================= */
+const S3 = (() => {
+  const W = 860, H = 640, M = { t: 70, r: 36, b: 64, l: 36 };
+  const svg = svgSetup("#svg3", W, H);
+  const st = DATA.lottery.stats;
+
+  // --- histogram view ---
+  const histG = svg.append("g");
+  const x = d3.scaleLog().domain([1, 6e7]).range([M.l, W - M.r]);
+  const vals = DATA.lottery.sample.map(v => Math.max(v, 1));
+  const bins = d3.bin().domain([0, Math.log10(6e7)]).thresholds(54)(vals.map(v => Math.log10(v)));
+  const yh = d3.scaleLinear().domain([0, d3.max(bins, b => b.length)]).range([H - M.b, M.t + 60]);
+
+  histG.append("g").attr("class", "axis").attr("transform", `translate(0,${H - M.b})`)
+    .call(d3.axisBottom(x).tickValues(LOGTICKS).tickFormat(logFmt))
+    .call(g => g.select(".domain").remove());
+  axisTitle(histG, (M.l + W - M.r) / 2, H - 18, "Views after 30 days (log scale)");
+
+  const p99log = Math.log10(st.p99);
+  const bars = histG.selectAll("rect").data(bins).join("rect")
+    .attr("x", b => x(Math.pow(10, b.x0)) + 0.5)
+    .attr("width", b => Math.max(1, x(Math.pow(10, b.x1)) - x(Math.pow(10, b.x0)) - 1.5))
+    .attr("y", H - M.b).attr("height", 0)
+    .attr("fill", b => b.x0 >= p99log ? PINK : "#d4d4d4");
+
+  const med = histG.append("g").attr("opacity", 0);
+  med.append("line").attr("x1", x(st.median)).attr("x2", x(st.median)).attr("y1", yh(0)).attr("y2", M.t + 48).attr("stroke", INKC).attr("stroke-width", 1.6);
+  med.append("text").attr("class", "anno").attr("x", x(st.median)).attr("y", M.t + 22).attr("text-anchor", "middle")
+    .call(t => { t.append("tspan").text("median: 641 views"); t.append("tspan").attr("class", "sub").attr("x", x(st.median)).attr("dy", 15).text("half of everything posted is below this line"); });
+  const mean = histG.append("g").attr("opacity", 0);
+  mean.append("line").attr("x1", x(st.mean)).attr("x2", x(st.mean)).attr("y1", yh(0)).attr("y2", M.t + 86).attr("stroke", INKC).attr("stroke-dasharray", "4 3");
+  mean.append("text").attr("class", "anno").attr("x", x(st.mean) + 8).attr("y", M.t + 80)
+    .call(t => { t.append("tspan").text("mean: 31,600"); t.append("tspan").attr("class", "sub").attr("x", x(st.mean) + 8).attr("dy", 15).text("50× the median"); });
+  const tail = histG.append("text").attr("class", "anno").attr("x", x(2.5e6)).attr("y", yh(0) - 168).attr("text-anchor", "middle").attr("opacity", 0)
+    .call(t => { t.append("tspan").attr("fill", PINK).text("the top 1%"); t.append("tspan").attr("class", "sub").attr("x", x(2.5e6)).attr("dy", 15).text("collects 64% of all views"); });
+
+  // --- waffle view ---
+  const wafG = svg.append("g").attr("opacity", 0);
+  const CELLS = 10, CS = 14, GAP = 3, BW = CELLS * (CS + GAP);
+  const bandX = i => M.l + 10 + i * (BW + 30);
+  const colDied = "#e7e7e7", colMid = "#9f9f9f", colBig = "#ff8aa6", colMega = PINK;
+  wafG.append("text").attr("class", "anno").attr("x", W / 2).attr("y", M.t - 26).attr("text-anchor", "middle")
+    .text("100 typical videos, by the creator's follower count");
+
+  DATA.lottery.bands.forEach((b, i) => {
+    const g = wafG.append("g").attr("transform", `translate(${bandX(i)}, ${M.t + 30})`);
+    const nDied = Math.round(b.under1k), nMega = Math.max(b.over1m >= 0.5 ? 1 : 0, Math.round(b.over1m));
+    const nBig = Math.max(0, Math.round(b.over100k) - nMega);
+    const cells = d3.range(100).map(k => k < nDied ? colDied : k >= 100 - nMega ? colMega : k >= 100 - nMega - nBig ? colBig : colMid);
+    g.selectAll("rect").data(cells).join("rect")
+      .attr("x", (c, k) => (k % CELLS) * (CS + GAP))
+      .attr("y", (c, k) => Math.floor(k / CELLS) * (CS + GAP))
+      .attr("width", CS).attr("height", CS).attr("rx", 2.5).attr("fill", c => c);
+    g.append("text").attr("class", "anno").attr("x", BW / 2 - GAP).attr("y", BW + 18).attr("text-anchor", "middle").text(b.band + " followers");
+    g.append("text").attr("class", "anno").attr("x", BW / 2 - GAP).attr("y", BW + 36).attr("text-anchor", "middle")
+      .append("tspan").attr("class", "sub").text("median " + fmtSI(b.med) + " views");
+  });
+  const lg = wafG.append("g").attr("transform", `translate(${M.l + 10}, ${H - 86})`);
+  [[colDied, "flopped: under 1K views"], [colMid, "1K – 100K"], [colBig, "over 100K"], [colMega, "over 1M"]].forEach((d, i) => {
+    const g = lg.append("g").attr("transform", `translate(${i * 190},0)`);
+    g.append("rect").attr("width", 13).attr("height", 13).attr("rx", 2.5).attr("fill", d[0]);
+    g.append("text").attr("class", "ref-label").attr("x", 19).attr("y", 11).text(d[1]);
+  });
+
+  function showHist(stage) {
+    wafG.transition().duration(450).attr("opacity", 0);
+    histG.transition().duration(450).attr("opacity", 1);
+    bars.transition().duration(700).delay((b, i) => i * 7)
+      .attr("y", b => yh(b.length)).attr("height", b => yh(0) - yh(b.length))
+      .attr("fill", b => stage >= 1 && b.x0 >= p99log ? PINK : "#d4d4d4");
+    med.transition().duration(500).attr("opacity", 1);
+    mean.transition().duration(500).delay(200).attr("opacity", 1);
+    tail.transition().duration(500).attr("opacity", stage >= 1 ? 1 : 0);
+  }
+  const steps = [
+    () => showHist(0),
+    () => showHist(1),
+    () => { histG.transition().duration(450).attr("opacity", 0); wafG.transition().duration(600).attr("opacity", 1); },
+  ];
+  return { steps };
+})();
+
+/* =========================================================
+   PART 4 — movers small multiples
+   ========================================================= */
+(() => {
+  const conf = [
+    { key: "topic", title: "Sport beats dance", sub: "Median views by topic. Sports & fitness videos typically double the outcome of dance or life-hack content.",
+      rename: k => NICE[k] || k, top: 9 },
+    { key: "duration", title: "Longer wins, actually", sub: "The 15-second TikTok stereotype doesn't pay: videos of 1–2 minutes typically earn almost 3× more than clips under 30s.", top: 5 },
+    { key: "emotion", title: "Surprise outperforms joy", sub: "80% of videos lead with joy — but the rarer surprise-led videos do half again better at the median.", top: 6 },
+    { key: "ai", title: "AI content doesn't take off", sub: "Median views are a third lower — and at the 90th percentile, organic videos reach 20,300 views vs 2,500 for AI-generated ones.", top: 2 },
+  ];
+  const grid = d3.select("#movers .grid");
+  conf.forEach(c => {
+    const rows = DATA.movers[c.key].slice(0, c.top);
+    const div = grid.append("div").attr("class", "mover");
+    div.append("h3").text(c.title);
+    div.append("p").attr("class", "sub").text(c.sub);
+    const RH = 30, W = 420, H = rows.length * RH + 6, LW = 128;
+    const svg = div.append("svg").attr("viewBox", `0 0 ${W} ${H}`);
+    const x = d3.scaleLinear().domain([0, d3.max(rows, r => r.med)]).range([0, W - LW - 60]);
+    const g = svg.selectAll("g").data(rows).join("g")
+      .attr("transform", (r, i) => `translate(${LW}, ${i * RH})`);
+    g.append("rect").attr("height", RH - 9).attr("y", 4).attr("rx", 2)
+      .attr("width", r => Math.max(2, x(r.med)))
+      .attr("fill", (r, i) => i === 0 ? PINK : "#d8d8d8");
+    g.append("text").attr("class", "bar-label").attr("x", -8).attr("y", RH / 2 + 3).attr("text-anchor", "end")
+      .text(r => (c.rename ? c.rename(r.k) : r.k));
+    g.append("text").attr("class", "bar-val").attr("x", r => x(r.med) + 6).attr("y", RH / 2 + 3)
+      .text(r => d3.format(",")(r.med));
+  });
+})();
+
+/* =========================================================
+   PART 5 — sandbox
+   ========================================================= */
+(() => {
+  const sb = DATA.sandbox;
+  const niceTopic = t => NICE[t] || t;
+  const sel = { topic: -1, dur: -1, emo: -1 };
+  function chips(id, items, key, fmt) {
+    const c = d3.select(id).selectAll("div").data([-1, ...items.keys()]).join("div")
+      .attr("class", i => "chip" + (i === -1 ? " on" : ""))
+      .text(i => i === -1 ? "Any" : fmt(items[i]))
+      .on("click", (e, i) => { sel[key] = i; c.classed("on", j => j === i); });
+  }
+  chips("#chips-topic", sb.topics, "topic", niceTopic);
+  chips("#chips-dur", sb.durations, "dur", d => d);
+  chips("#chips-emo", sb.emotions, "emo", e => e[0].toUpperCase() + e.slice(1));
+
+  const W = 860, H = 250, M = { l: 16, r: 16 };
+  const svg = svgSetup("#strip", W, H);
+  const x = d3.scaleLog().domain([1, 6e7]).range([M.l, W - M.r]);
+  svg.append("g").attr("class", "axis").attr("transform", `translate(0,${H - 36})`)
+    .call(d3.axisBottom(x).tickValues(LOGTICKS).tickFormat(logFmt))
+    .call(g => g.select(".domain").remove());
+  svg.append("line").attr("x1", x(641)).attr("x2", x(641)).attr("y1", 26).attr("y2", H - 36)
+    .attr("stroke", "#b5b0a8").attr("stroke-dasharray", "3 3");
+  svg.append("text").attr("class", "ref-label").attr("x", x(641)).attr("y", 16).attr("text-anchor", "middle").text("overall median: 641");
+  const dotsG = svg.append("g");
+
+  d3.select("#roll").on("click", () => {
+    let pool = sb.pool;
+    if (sel.topic >= 0) pool = pool.filter(r => r[0] === sel.topic);
+    if (sel.dur >= 0) pool = pool.filter(r => r[1] === sel.dur);
+    if (sel.emo >= 0) pool = pool.filter(r => r[2] === sel.emo);
+    const verdict = d3.select("#verdict");
+    if (pool.length < 30) { verdict.html("Only " + pool.length + " real videos match this exact recipe — too few to draw 100. Loosen one filter."); return; }
+    const draw = d3.shuffle(pool.slice()).slice(0, 100).map(r => Math.max(r[3], 1));
+    draw.sort(d3.ascending);
+    const med = d3.quantile(draw, 0.5), best = d3.max(draw), died = draw.filter(v => v < 1000).length;
+    const dots = dotsG.selectAll("circle").data(draw, (v, i) => i);
+    dots.enter().append("circle")
+      .attr("cy", H - 62).attr("r", 4).attr("fill", "#bbb")
+      .merge(dots)
+      .attr("cx", x(1)).attr("cy", H - 62)
+      .transition().duration(900).delay((v, i) => i * 9).ease(d3.easeCubicOut)
+      .attr("cx", v => x(v))
+      .attr("cy", (v, i) => H - 62 - (draw.slice(0, i).filter(u => Math.abs(Math.log10(u) - Math.log10(v)) < 0.07).length % 18) * 9)
+      .attr("fill", v => v >= 1e6 ? PINK : v < 1000 ? "#d9d4cc" : "#9f9f9f");
+    verdict.html(`Your median video: <b>${fmtSI(med)} views</b>. Your best: <b>${fmtSI(best)}</b>. ` +
+      `<b>${died} of 100</b> never passed 1,000 views.` +
+      (best >= 1e6 ? " You hit the jackpot — try rolling again and see if it repeats." : " No millionaire this round — that's normal. Roll again."));
+  });
+})();
+
+/* =========================================================
+   scrollama wiring
+   ========================================================= */
+[["#scrolly1", S1], ["#scrolly2", S2], ["#scrolly3", S3]].forEach(([selr, mod]) => {
+  scrollama().setup({ step: `${selr} .step`, offset: 0.55 })
+    .onStepEnter(({ element, index, direction }) => {
+      d3.selectAll(`${selr} .step`).classed("is-active", false);
+      d3.select(element).classed("is-active", true);
+      mod.steps[index]();
+    });
+});
+// fire first steps on load so charts aren't empty before scrolling
+S1.steps[0](); S2.steps[0](); S3.steps[0]();
+</script>
+</body>
+</html>
