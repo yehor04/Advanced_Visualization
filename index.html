@@ -20,14 +20,23 @@
   :root {
     --ink: #121212; --muted: #6b6b6b; --faint: #c9c9c9; --line: #e6e6e6;
     --pink: #fe2c55; --pink-soft: #ffa3b8; --teal: #00808f; --bg: #ffffff;
+    --card: #ffffff; --sandbox: #faf9f7; --chip: #ffffff; --chipline: #d8d4cd; --dek: #3c3c3c;
     --serif: "Source Serif 4", Georgia, serif;
     --display: "Playfair Display", "Source Serif 4", Georgia, serif;
     --sans: "Inter", -apple-system, "Segoe UI", sans-serif;
   }
+  body.dark {
+    --ink: #e8e8e8; --muted: #9aa3b0; --faint: #4a4f58; --line: #2a2f38;
+    --teal: #2fb3c4; --bg: #14171d;
+    --card: #1b1f27; --sandbox: #161a21; --chip: #1b1f27; --chipline: #39424f; --dek: #b9c0cb;
+  }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6;
+         transition: background 0.3s, color 0.3s; }
   ::selection { background: var(--pink); color: #fff; }
+  /* charts always sit on white panels in both themes — chart internals never re-theme */
+  .scrolly figure svg, .mover svg, svg#strip { background: #fff; border-radius: 10px; }
 
   /* ---------- masthead + progress ---------- */
   #progress { position: fixed; top: 0; left: 0; height: 3px; width: 0; background: var(--pink); z-index: 50; }
@@ -36,6 +45,11 @@
                   font: 600 11px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: #fff; }
   #masthead .mid { font-family: var(--display); font-weight: 800; font-size: 15px; letter-spacing: 0.04em; text-transform: none; }
   #masthead .side { color: #9a9a9a; }
+  #masthead .right { display: flex; gap: 16px; align-items: center; }
+  #themeBtn { font: 600 10.5px/1 var(--sans); letter-spacing: 0.1em; text-transform: uppercase;
+              background: transparent; color: #fff; border: 1px solid #4a4f58; border-radius: 999px;
+              padding: 6px 13px; cursor: pointer; transition: border-color 0.15s; }
+  #themeBtn:hover { border-color: #fff; }
   @media (max-width: 700px) { #masthead .side { display: none; } }
 
   /* ---------- hero ---------- */
@@ -46,10 +60,10 @@
   .herocap { font: 400 14px/1.45 var(--sans); color: var(--muted); max-width: 200px; margin: 2px auto 0; }
   .kicker { font: 600 12px/1 var(--sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--pink); margin-top: 30px; }
   h1 { font: 800 clamp(42px, 7vw, 74px)/1.08 var(--display); margin: 16px 0 18px; letter-spacing: -0.015em; }
-  .dek { font: 400 clamp(18px, 2.4vw, 21px)/1.55 var(--serif); color: #3c3c3c; margin: 0 auto 30px; max-width: 620px; }
+  .dek { font: 400 clamp(18px, 2.4vw, 21px)/1.55 var(--serif); color: var(--dek); margin: 0 auto 30px; max-width: 620px; }
   .byline { font: 400 14px/1.7 var(--sans); color: var(--muted); }
   .byline .names { color: var(--ink); }
-  .byline .names b { font-weight: 600; border-bottom: 1px solid #cfcfcf; }
+  .byline .names b { font-weight: 600; border-bottom: 1px solid var(--faint); }
   .byline .pub { font-size: 12.5px; margin-top: 4px; }
   .hero-rule { width: 72px; border: none; border-top: 4px double var(--ink); margin: 36px auto 0; }
   .scrollhint { font: 600 11px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
@@ -68,8 +82,9 @@
   /* ---------- scrolly layout ---------- */
   .scrolly { position: relative; display: flex; max-width: 1280px; margin: 0 auto; padding: 0 24px; }
   .scrolly article { position: relative; flex: 0 0 320px; max-width: 320px; z-index: 2; }
-  .scrolly figure { position: sticky; top: 0; flex: 1; height: 96vh; margin: 0; display: flex; align-items: center; justify-content: center; }
-  .chart-head { position: absolute; top: 4.5vh; left: clamp(16px, 7%, 80px); max-width: 320px; z-index: 1; }
+  .scrolly figure { position: sticky; top: 0; flex: 1; height: 96vh; margin: 0; display: flex; align-items: flex-start; justify-content: center; }
+  .scrolly figure svg { margin-top: 96px; }
+  .chart-head { position: absolute; top: 22px; left: clamp(16px, 7%, 80px); max-width: 460px; z-index: 1; }
   .chart-head .t { font: 700 17px/1.3 var(--display); }
   .chart-head .d { font: 400 12.5px/1.5 var(--sans); color: var(--muted); margin-top: 3px; }
   #tip { position: fixed; pointer-events: none; display: none; z-index: 60; background: #121212; color: #fff;
@@ -77,10 +92,10 @@
   #tip b { font-weight: 600; }
   .hl-pink { color: var(--pink); font-weight: 600; }
   .hl-teal { color: var(--teal); font-weight: 600; }
-  .scrolly figure svg { width: 100%; height: auto; max-height: 94vh; }
+  .scrolly figure svg { width: 100%; height: auto; max-height: calc(96vh - 116px); }
   .step { min-height: 85vh; display: flex; align-items: center; opacity: 0.25; transition: opacity 0.3s; }
   .step.is-active { opacity: 1; }
-  .step .card { background: #fff; border: 1px solid var(--line); border-left: 3px solid var(--ink);
+  .step .card { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--ink);
                 padding: 18px 20px; box-shadow: 0 2px 14px rgba(0,0,0,0.05); }
   .step .card p { font: 400 16px/1.65 var(--serif); margin: 0; }
   .step .card p + p { margin-top: 10px; }
@@ -88,15 +103,15 @@
   .step .card b { font-weight: 600; }
   .spacer-half { height: 12vh; }
 
-  /* ---------- chart text ---------- */
-  .axis text { font: 500 11.5px var(--sans); fill: var(--muted); }
-  .axis line, .axis path { stroke: var(--line); }
-  .axis-title { font: 600 11px var(--sans); fill: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
-  .anno { font: 600 13px/1.35 var(--sans); fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round; }
-  .anno .sub { font-weight: 400; fill: var(--muted); }
+  /* ---------- chart text (fixed colors: charts live on white panels in both themes) ---------- */
+  .axis text { font: 500 11.5px var(--sans); fill: #6b6b6b; }
+  .axis line, .axis path { stroke: #e6e6e6; }
+  .axis-title { font: 600 11px var(--sans); fill: #6b6b6b; letter-spacing: 0.06em; text-transform: uppercase; }
+  .anno { font: 600 13px/1.35 var(--sans); fill: #121212; paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round; }
+  .anno .sub { font-weight: 400; fill: #6b6b6b; }
   .ref-label { paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round; }
-  .anno-line { stroke: var(--ink); stroke-width: 1; fill: none; }
-  .ref-label { font: 600 11px var(--sans); fill: var(--muted); }
+  .anno-line { stroke: #121212; stroke-width: 1; fill: none; }
+  .ref-label { font: 600 11px var(--sans); fill: #6b6b6b; }
 
   /* ---------- movers ---------- */
   #movers .grid { columns: 2; column-gap: 48px; max-width: 1020px; margin: 0 auto; padding: 10px 24px 30px; }
@@ -105,18 +120,18 @@
   .mover h3 { font: 700 21px/1.25 var(--display); margin: 0 0 4px; }
   .mover .sub { font: 400 14px/1.5 var(--sans); color: var(--muted); margin: 0 0 12px; }
   .mover svg { width: 100%; height: auto; }
-  .mover .bar-label { font: 500 12px var(--sans); fill: var(--ink); }
-  .mover .bar-val { font: 600 12px var(--sans); fill: var(--ink); }
+  .mover .bar-label { font: 500 12px var(--sans); fill: #121212; }
+  .mover .bar-val { font: 600 12px var(--sans); fill: #121212; }
   .mover .bar-val.in { fill: #fff; }
 
   /* ---------- sandbox ---------- */
-  #sandbox { background: #faf9f7; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 64px 24px 72px; margin-top: 60px; }
+  #sandbox { background: var(--sandbox); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 64px 24px 72px; margin-top: 60px; }
   #sandbox .inner { max-width: 860px; margin: 0 auto; }
   .chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 6px 0 18px; }
-  .chip { font: 500 13px/1 var(--sans); padding: 8px 13px; border: 1px solid #d8d4cd; border-radius: 999px;
-          background: #fff; cursor: pointer; user-select: none; transition: all 0.12s; }
+  .chip { font: 500 13px/1 var(--sans); padding: 8px 13px; border: 1px solid var(--chipline); border-radius: 999px;
+          background: var(--chip); cursor: pointer; user-select: none; transition: all 0.12s; }
   .chip:hover { border-color: var(--ink); }
-  .chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .chip.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
   .chip-label { font: 600 11px/1 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-top: 16px; }
   #roll { font: 600 15px/1 var(--sans); background: var(--pink); color: #fff; border: none; border-radius: 8px;
           padding: 14px 26px; cursor: pointer; margin-top: 8px; }
@@ -124,7 +139,7 @@
   #verdict { font: 400 17px/1.6 var(--serif); margin-top: 18px; min-height: 56px; }
   #verdict b { font-weight: 700; }
   .strip-legend { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; margin-top: 10px;
-                  font: 500 12px/1 var(--sans); color: #444; }
+                  font: 500 12px/1 var(--sans); color: var(--ink); }
   .strip-legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: -1px; }
   #strip { margin-top: 4px; }
 
@@ -139,10 +154,10 @@
     .scrolly article { max-width: none; flex: none; z-index: 2; }
     /* chart pins to the top of the screen; cards scroll beneath it */
     .scrolly figure { order: -1; height: 54vh; flex-direction: column; justify-content: flex-start;
-                      background: #fff; z-index: 1; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
-    .scrolly figure svg { max-height: calc(54vh - 64px); }
+                      background: var(--bg); z-index: 1; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+    .scrolly figure svg { max-height: calc(54vh - 64px); margin-top: 0; }
     .step { min-height: 58vh; justify-content: center; opacity: 1; }
-    .step .card { max-width: 420px; margin: 0 auto; background: #fff; box-shadow: 0 4px 18px rgba(0,0,0,0.12); }
+    .step .card { max-width: 420px; margin: 0 auto; background: var(--card); box-shadow: 0 4px 18px rgba(0,0,0,0.12); }
     .chart-head { position: static; max-width: none; padding: 10px 8px 4px; }
     .chart-head .d { font-size: 11.5px; }
   }
@@ -150,12 +165,14 @@
 </head>
 <body>
 
+<script>try { if (localStorage.getItem("tl-theme") === "dark") document.body.classList.add("dark"); } catch (e) {}</script>
 <div id="progress"></div>
 <div id="tip"></div>
 <div id="masthead"><div class="in">
   <span class="side">Advanced Interactive Visualization</span>
   <span class="mid">Group 4 · Social Media</span>
-  <span class="side">JKU Linz · June 2026</span>
+  <span class="right"><span class="side">JKU Linz · June 2026</span>
+    <button id="themeBtn" aria-label="Toggle dark theme">☾&ensp;Dark</button></span>
 </div></div>
 
 <header class="hero">
@@ -354,6 +371,18 @@ function axisTitle(svg, x, y, text, anchor = "middle", rotate = false) {
     d3.select(el).transition().duration(1500).ease(d3.easeCubicOut)
       .tween("count", () => t => { el.textContent = Math.round(t * target); });
   });
+})();
+
+/* dark theme toggle — page chrome only; charts stay on white panels, so no redraw needed */
+(() => {
+  const btn = document.getElementById("themeBtn");
+  const apply = dark => {
+    document.body.classList.toggle("dark", dark);
+    btn.innerHTML = dark ? "☀&ensp;Light" : "☾&ensp;Dark";
+    try { localStorage.setItem("tl-theme", dark ? "dark" : "light"); } catch (e) {}
+  };
+  btn.innerHTML = document.body.classList.contains("dark") ? "☀&ensp;Light" : "☾&ensp;Dark";
+  btn.addEventListener("click", () => apply(!document.body.classList.contains("dark")));
 })();
 
 /* reading progress bar + tooltip cleanup */
