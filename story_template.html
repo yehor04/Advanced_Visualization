@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The TikTok Lottery — why followers don't buy you views</title>
+<meta name="description" content="We followed 209,543 TikTok videos for 30 days each. Half die under 641 views; the top 1% takes 64% of everything. An interactive data story.">
+<meta property="og:title" content="The TikTok Lottery — why followers don't buy you views">
+<meta property="og:description" content="We followed 209,543 TikTok videos for 30 days each. Half die under 641 views; the top 1% takes 64% of everything.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://yehor04.github.io/Advanced_Visualization/">
+<meta property="og:image" content="https://yehor04.github.io/Advanced_Visualization/og.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎰</text></svg>">
@@ -45,6 +52,9 @@
   .byline .names b { font-weight: 600; border-bottom: 1px solid #cfcfcf; }
   .byline .pub { font-size: 12.5px; margin-top: 4px; }
   .hero-rule { width: 72px; border: none; border-top: 4px double var(--ink); margin: 36px auto 0; }
+  .scrollhint { font: 600 11px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+                margin-top: 26px; animation: hint 2.2s ease-in-out infinite; }
+  @keyframes hint { 0%, 100% { transform: translateY(0); opacity: 0.7; } 50% { transform: translateY(5px); opacity: 1; } }
 
   /* ---------- prose ---------- */
   .prose { max-width: 640px; margin: 0 auto; padding: 44px 24px; }
@@ -123,8 +133,9 @@
   @media (max-width: 880px) {
     .scrolly { flex-direction: column; }
     .scrolly article { max-width: none; flex: none; }
-    .scrolly figure { height: 70vh; }
+    .scrolly figure { height: 70vh; flex-direction: column; }
     .step { min-height: 70vh; }
+    .chart-head { position: static; max-width: none; padding: 10px 4px 0; }
   }
 </style>
 </head>
@@ -159,6 +170,7 @@
     <div class="pub">Published June 12, 2026 · Data: June–November 2024</div>
   </div>
   <hr class="hero-rule">
+  <div class="scrollhint">Scroll to begin ↓</div>
 </header>
 
 <section class="prose">
@@ -544,6 +556,34 @@ const S2 = (() => {
       });
     e.transition().duration(450).attr("opacity", 1);
   }
+  // hover: nearest-line lookup over all sampled trajectory points
+  const tip2 = d3.select("#tip");
+  const pts = [], ptLine = [];
+  DATA.lifelines.forEach((d, li) => d.v.forEach((val, i) => {
+    pts.push([x(i), y(Math.max(val, 1))]); ptLine.push(li);
+  }));
+  const delaunay = d3.Delaunay.from(pts);
+  const hoverPath = svg.append("path").attr("fill", "none")
+    .attr("stroke", "#333").attr("stroke-width", 2.4).attr("opacity", 0).attr("pointer-events", "none");
+  svg.append("rect")
+    .attr("x", M.l).attr("y", M.t).attr("width", W - M.l - M.r).attr("height", H - M.t - M.b)
+    .attr("fill", "transparent").style("cursor", "crosshair")
+    .on("mousemove", function (e) {
+      const [mx, my] = d3.pointer(e, svg.node());
+      const i = delaunay.find(mx, my);
+      if (Math.hypot(pts[i][0] - mx, pts[i][1] - my) > 28) {
+        hoverPath.attr("opacity", 0); tip2.style("display", "none"); return;
+      }
+      const d = DATA.lifelines[ptLine[i]];
+      hoverPath.attr("d", line(d.v)).attr("opacity", 1)
+        .attr("stroke", d.hl ? HL[d.hl].c : "#333");
+      tip2.style("display", "block")
+        .style("left", Math.min(e.clientX + 14, window.innerWidth - 200) + "px")
+        .style("top", (e.clientY + 10) + "px")
+        .html(`<b>${fmtSI(Math.max(d.v[30], 1))} views</b> by day 30<br>${fmtSI(Math.max(d.v[7], 1))} in the first week`);
+    })
+    .on("mouseout", () => { hoverPath.attr("opacity", 0); tip2.style("display", "none"); });
+
   const steps = [
     () => showHl([], false),
     () => showHl(["winner"], true),
@@ -611,6 +651,15 @@ const S3 = (() => {
     g.append("text").attr("class", "anno").attr("x", BW / 2 - GAP).attr("y", BW + 18).attr("text-anchor", "middle").text(b.band + " followers");
     g.append("text").attr("class", "anno").attr("x", BW / 2 - GAP).attr("y", BW + 36).attr("text-anchor", "middle")
       .append("tspan").attr("class", "sub").text("median " + fmtSI(b.med) + " views");
+    g.append("rect").attr("width", BW - GAP).attr("height", BW - GAP).attr("fill", "transparent")
+      .style("cursor", "crosshair")
+      .on("mousemove", e => d3.select("#tip").style("display", "block")
+        .style("left", Math.min(e.clientX + 14, window.innerWidth - 240) + "px")
+        .style("top", (e.clientY + 10) + "px")
+        .html(`<b>${b.band} followers</b> · ${b.n.toLocaleString()} videos<br>` +
+              `${b.under1k}% die under 1K views<br>` +
+              `${b.over100k}% pass 100K · ${b.over1m}% pass 1M`))
+      .on("mouseout", () => d3.select("#tip").style("display", "none"));
   });
   const lg = wafG.append("g").attr("transform", `translate(${M.l + 10}, ${H - 86})`);
   [[colDied, "flopped: under 1K views"], [colMid, "1K – 100K"], [colBig, "over 100K"], [colMega, "over 1M"]].forEach((d, i) => {
@@ -659,14 +708,22 @@ const S3 = (() => {
     const x = d3.scaleLinear().domain([0, d3.max(rows, r => r.med)]).range([0, W - LW - 60]);
     const g = svg.selectAll("g").data(rows).join("g")
       .attr("transform", (r, i) => `translate(${LW}, ${i * RH})`);
-    g.append("rect").attr("height", RH - 9).attr("y", 4).attr("rx", 2)
-      .attr("width", r => Math.max(2, x(r.med)))
+    g.append("rect").attr("class", "mover-bar").attr("height", RH - 9).attr("y", 4).attr("rx", 2)
+      .attr("width", 2).attr("data-w", r => Math.max(2, x(r.med)))
       .attr("fill", (r, i) => i === 0 ? PINK : "#d8d8d8");
     g.append("text").attr("class", "bar-label").attr("x", -8).attr("y", RH / 2 + 3).attr("text-anchor", "end")
       .text(r => (c.rename ? c.rename(r.k) : r.k));
     g.append("text").attr("class", "bar-val").attr("x", r => x(r.med) + 6).attr("y", RH / 2 + 3)
-      .text(r => d3.format(",")(r.med));
+      .attr("opacity", 0).text(r => d3.format(",")(r.med));
   });
+  // animate bars when the section scrolls into view
+  new IntersectionObserver((entries, obs) => {
+    if (!entries.some(e => e.isIntersecting)) return;
+    obs.disconnect();
+    d3.selectAll("#movers .mover-bar").transition().duration(800).delay((r, i) => i * 40)
+      .ease(d3.easeCubicOut).attr("width", function () { return +this.dataset.w; });
+    d3.selectAll("#movers .bar-val").transition().delay((r, i) => 350 + i * 40).duration(400).attr("opacity", 1);
+  }, { threshold: 0.25 }).observe(document.querySelector("#movers"));
 })();
 
 /* =========================================================
@@ -707,6 +764,11 @@ const S3 = (() => {
     const draw = d3.shuffle(pool.slice()).slice(0, 100).map(r => Math.max(r[3], 1));
     draw.sort(d3.ascending);
     const med = d3.quantile(draw, 0.5), best = d3.max(draw), died = draw.filter(v => v < 1000).length;
+    const recipe = [
+      sel.topic >= 0 ? niceTopic(sb.topics[sel.topic]) : "any topic",
+      sel.dur >= 0 ? sb.durations[sel.dur] : "any length",
+      sel.emo >= 0 ? sb.emotions[sel.emo] + "-led" : "any emotion",
+    ].join(", ");
     const dots = dotsG.selectAll("circle").data(draw, (v, i) => i);
     dots.exit().remove();
     dots.enter().append("circle")
@@ -717,7 +779,7 @@ const S3 = (() => {
       .attr("cx", v => x(v))
       .attr("cy", (v, i) => H - 62 - (draw.slice(0, i).filter(u => Math.abs(Math.log10(u) - Math.log10(v)) < 0.07).length % 18) * 9)
       .attr("fill", v => v >= 1e6 ? PINK : v < 1000 ? "#d9d4cc" : "#9f9f9f");
-    verdict.html(`Your median video: <b>${fmtSI(med)} views</b>. Your best: <b>${fmtSI(best)}</b>. ` +
+    verdict.html(`You posted 100 real videos (${recipe}). Median: <b>${fmtSI(med)} views</b>. Best: <b>${fmtSI(best)}</b>. ` +
       `<b>${died} of 100</b> never passed 1,000 views.` +
       (best >= 1e6 ? " You hit the jackpot — try rolling again and see if it repeats." : " No millionaire this round — that's normal. Roll again."));
   });
