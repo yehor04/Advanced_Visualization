@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The TikTok Lottery — why followers don't buy you views</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎰</text></svg>">
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script src="https://unpkg.com/scrollama"></script>
 <style>
@@ -13,28 +14,44 @@
     --ink: #121212; --muted: #6b6b6b; --faint: #c9c9c9; --line: #e6e6e6;
     --pink: #fe2c55; --pink-soft: #ffa3b8; --teal: #00808f; --bg: #ffffff;
     --serif: "Source Serif 4", Georgia, serif;
+    --display: "Playfair Display", "Source Serif 4", Georgia, serif;
     --sans: "Inter", -apple-system, "Segoe UI", sans-serif;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; }
+  ::selection { background: var(--pink); color: #fff; }
+
+  /* ---------- masthead ---------- */
+  #masthead { border-bottom: 1px solid var(--ink); }
+  #masthead .in { max-width: 1140px; margin: 0 auto; padding: 13px 24px; display: flex; justify-content: space-between; align-items: baseline;
+                  font: 600 11px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
+  #masthead .mid { font-family: var(--display); font-weight: 800; font-size: 14px; letter-spacing: 0.04em; text-transform: none; }
+  #masthead .side { color: var(--muted); }
+  @media (max-width: 700px) { #masthead .side { display: none; } }
 
   /* ---------- hero ---------- */
-  header.hero { max-width: 720px; margin: 0 auto; padding: 96px 24px 24px; text-align: center; }
-  .kicker { font: 600 12px/1 var(--sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--pink); }
-  h1 { font: 700 clamp(40px, 7vw, 68px)/1.05 var(--serif); margin: 18px 0 14px; letter-spacing: -0.01em; }
-  .dek { font: 400 clamp(18px, 2.4vw, 22px)/1.5 var(--serif); color: #3c3c3c; margin: 0 auto 26px; max-width: 600px; }
-  .byline { font: 500 13px/1.6 var(--sans); color: var(--muted); }
-  .byline b { color: var(--ink); font-weight: 600; }
-  .hero-rule { width: 56px; height: 3px; background: var(--ink); margin: 34px auto 0; }
+  header.hero { max-width: 780px; margin: 0 auto; padding: 56px 24px 8px; text-align: center; }
+  #heroviz { display: flex; justify-content: center; gap: clamp(36px, 8vw, 90px); margin: 0 auto 8px; }
+  .herocell .waffle { display: block; margin: 0 auto; }
+  .heronum { font: 800 clamp(40px, 6vw, 58px)/1.1 var(--display); margin-top: 2px; }
+  .herocap { font: 400 14px/1.45 var(--sans); color: var(--muted); max-width: 200px; margin: 2px auto 0; }
+  .kicker { font: 600 12px/1 var(--sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--pink); margin-top: 30px; }
+  h1 { font: 800 clamp(42px, 7vw, 74px)/1.08 var(--display); margin: 16px 0 18px; letter-spacing: -0.015em; }
+  .dek { font: 400 clamp(18px, 2.4vw, 21px)/1.55 var(--serif); color: #3c3c3c; margin: 0 auto 30px; max-width: 620px; }
+  .byline { font: 400 14px/1.7 var(--sans); color: var(--muted); }
+  .byline .names { color: var(--ink); }
+  .byline .names b { font-weight: 600; border-bottom: 1px solid #cfcfcf; }
+  .byline .pub { font-size: 12.5px; margin-top: 4px; }
+  .hero-rule { width: 72px; border: none; border-top: 4px double var(--ink); margin: 36px auto 0; }
 
   /* ---------- prose ---------- */
   .prose { max-width: 640px; margin: 0 auto; padding: 44px 24px; }
   .prose p { font: 400 18px/1.75 var(--serif); margin: 0 0 22px; }
-  .prose .lead::first-letter { font: 700 54px/0.9 var(--serif); float: left; padding: 6px 10px 0 0; }
+  .prose .lead::first-letter { font: 700 58px/0.83 var(--display); float: left; padding: 4px 10px 0 0; }
   .part { font: 600 12px/1 var(--sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin: 26px 0 8px; }
   .part b { color: var(--pink); }
-  h2 { font: 700 clamp(26px, 4vw, 34px)/1.2 var(--serif); margin: 0 0 18px; }
+  h2 { font: 700 clamp(27px, 4vw, 36px)/1.22 var(--display); margin: 0 0 18px; letter-spacing: -0.01em; }
   .prose strong { font-weight: 600; }
 
   /* ---------- scrolly layout ---------- */
@@ -65,7 +82,7 @@
   /* ---------- movers ---------- */
   #movers .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 28px; max-width: 1140px; margin: 0 auto; padding: 10px 24px 30px; }
   .mover { border-top: 2px solid var(--ink); padding-top: 14px; }
-  .mover h3 { font: 700 21px/1.25 var(--serif); margin: 0 0 4px; }
+  .mover h3 { font: 700 21px/1.25 var(--display); margin: 0 0 4px; }
   .mover .sub { font: 400 14px/1.5 var(--sans); color: var(--muted); margin: 0 0 12px; }
   .mover svg { width: 100%; height: auto; }
   .mover .bar-label { font: 500 12px var(--sans); fill: var(--ink); }
@@ -88,8 +105,8 @@
   #verdict b { font-weight: 700; }
   #strip { margin-top: 6px; }
 
-  footer { max-width: 640px; margin: 0 auto; padding: 56px 24px 90px; font: 400 13.5px/1.8 var(--sans); color: var(--muted); }
-  footer h4 { font: 700 15px var(--sans); color: var(--ink); margin: 0 0 8px; }
+  footer { max-width: 640px; margin: 0 auto; padding: 48px 24px 90px; font: 400 13.5px/1.8 var(--sans); color: var(--muted); border-top: 1px solid var(--line); }
+  footer h4 { font: 600 12px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); margin: 0 0 14px; }
   footer a { color: var(--teal); }
   footer p { margin: 0 0 14px; }
 
@@ -103,12 +120,33 @@
 </head>
 <body>
 
+<div id="masthead"><div class="in">
+  <span class="side">Advanced Interactive Visualization</span>
+  <span class="mid">Group 4 · Social Media</span>
+  <span class="side">JKU Linz · June 2026</span>
+</div></div>
+
 <header class="hero">
+  <div id="heroviz">
+    <div class="herocell" id="hero-left">
+      <svg class="waffle"></svg>
+      <div class="heronum">62<span style="font-size:0.55em"> in 100</span></div>
+      <div class="herocap">videos never pass 1,000 views</div>
+    </div>
+    <div class="herocell" id="hero-right">
+      <svg class="waffle"></svg>
+      <div class="heronum" style="color:var(--pink)">64%</div>
+      <div class="herocap">of all views go to the top 1% of videos</div>
+    </div>
+  </div>
   <div class="kicker">209,543 videos &middot; 1,872 creators &middot; one algorithm</div>
   <h1>The TikTok Lottery</h1>
   <p class="dek">A creator with 28 million followers posts a video. So does an account almost nobody follows. Thirty days later, the nobody has eight million views. This is not a fluke — it's how the platform works.</p>
-  <div class="byline"><b>Group 4</b> &middot; Yehor Larcenko, Olha, Ivanna, Davyd<br>Advanced Interactive Visualization &middot; JKU Linz &middot; June 2026</div>
-  <div class="hero-rule"></div>
+  <div class="byline">
+    <div class="names">By <b>Yehor Larcenko</b>, <b>Olha</b>, <b>Ivanna</b> and <b>Davyd</b></div>
+    <div class="pub">Published June 12, 2026 · Data: June–November 2024</div>
+  </div>
+  <hr class="hero-rule">
 </header>
 
 <section class="prose">
@@ -244,6 +282,26 @@ function axisTitle(svg, x, y, text, anchor = "middle", rotate = false) {
     .attr("text-anchor", anchor)
     .attr("transform", rotate ? `rotate(-90 ${x} ${y})` : null).text(text);
 }
+
+/* =========================================================
+   HERO — two opening waffles
+   ========================================================= */
+(() => {
+  const CS = 13, R = 4.6, N = 10, W = N * CS;
+  function waffle(sel, nHl, colHl, colRest, fromTop) {
+    const svg = d3.select(sel).attr("viewBox", `0 0 ${W} ${W}`).attr("width", W).attr("height", W);
+    svg.selectAll("circle").data(d3.range(100)).join("circle")
+      .attr("cx", i => (i % N) * CS + CS / 2)
+      .attr("cy", i => Math.floor(i / N) * CS + CS / 2)
+      .attr("r", R)
+      .attr("fill", i => (fromTop ? i < nHl : i >= 100 - nHl) ? colHl : colRest)
+      .attr("opacity", 0)
+      .transition().delay(i => 150 + i * 9).duration(350)
+      .attr("opacity", 1);
+  }
+  waffle("#hero-left .waffle", 62, "#b9b9b9", "#e9e9e9", true);
+  waffle("#hero-right .waffle", 64, PINK, "#e9e9e9", false);
+})();
 
 /* =========================================================
    SCROLLY 1 — creators scatter
