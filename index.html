@@ -99,8 +99,9 @@
   .ref-label { font: 600 11px var(--sans); fill: var(--muted); }
 
   /* ---------- movers ---------- */
-  #movers .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 28px; max-width: 1140px; margin: 0 auto; padding: 10px 24px 30px; }
-  .mover { border-top: 2px solid var(--ink); padding-top: 14px; }
+  #movers .grid { columns: 2; column-gap: 48px; max-width: 1020px; margin: 0 auto; padding: 10px 24px 30px; }
+  .mover { border-top: 2px solid var(--ink); padding-top: 14px; margin-bottom: 40px; break-inside: avoid; }
+  @media (max-width: 700px) { #movers .grid { columns: 1; } }
   .mover h3 { font: 700 21px/1.25 var(--display); margin: 0 0 4px; }
   .mover .sub { font: 400 14px/1.5 var(--sans); color: var(--muted); margin: 0 0 12px; }
   .mover svg { width: 100%; height: auto; }
@@ -712,12 +713,13 @@ const S3 = (() => {
    PART 4 — movers small multiples
    ========================================================= */
 (() => {
+  // ordered so the two CSS columns balance: topic(9)+ai(2) ≈ emotion(6)+duration(5)
   const conf = [
     { key: "topic", title: "Sport beats dance", sub: "Median views by topic. Sports & fitness videos typically double the outcome of dance or life-hack content.",
       rename: k => NICE[k] || k, top: 9 },
-    { key: "duration", title: "Longer wins, actually", sub: "The 15-second TikTok stereotype doesn't pay: videos of 1–2 minutes typically earn about 2.5× more than clips under 30s.", top: 5 },
-    { key: "emotion", title: "Surprise outperforms joy", sub: "80% of videos lead with joy — but the rarer surprise-led videos do half again better at the median.", top: 6 },
     { key: "ai", title: "AI content doesn't take off", sub: "Median views are a third lower — and at the 90th percentile, organic videos reach 20,300 views vs 2,500 for AI-generated ones.", top: 2 },
+    { key: "emotion", title: "Surprise outperforms joy", sub: "80% of videos lead with joy — but the rarer surprise-led videos do half again better at the median.", top: 6 },
+    { key: "duration", title: "Longer wins, actually", sub: "The 15-second TikTok stereotype doesn't pay: videos of 1–2 minutes typically earn about 2.5× more than clips under 30s.", top: 5 },
   ];
   const grid = d3.select("#movers .grid");
   conf.forEach(c => {
