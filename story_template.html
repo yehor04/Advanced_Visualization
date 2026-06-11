@@ -372,8 +372,8 @@ window.addEventListener("scroll", () => {
 const S1 = (() => {
   const W = 860, H = 640, M = { t: 46, r: 30, b: 56, l: 64 };
   const svg = svgSetup("#svg1", W, H);
-  const x = d3.scaleLog().domain([800, 4e7]).range([M.l, W - M.r]);
-  const y = d3.scaleLog().domain([40, 6e6]).range([H - M.b, M.t]);
+  const x = d3.scaleLog().domain([800, 4e7]).range([M.l, W - M.r]).clamp(true);
+  const y = d3.scaleLog().domain([40, 6e6]).range([H - M.b, M.t]).clamp(true);
 
   svg.append("g").attr("class", "axis").attr("transform", `translate(0,${H - M.b})`)
     .call(d3.axisBottom(x).tickValues(LOGTICKS.filter(t => t >= 1000)).tickFormat(logFmt).tickSize(-(H - M.t - M.b)))
@@ -468,7 +468,11 @@ const S1 = (() => {
     () => { // 1 TV line
       tv.transition().duration(600).attr("opacity", 1);
       spreadG.transition().duration(400).attr("opacity", 0);
-      dots.transition().duration(500).attr("opacity", d => d.hl === "giant" ? 1 : 0);
+      ranges.transition().duration(400).attr("opacity", 0);
+      dots.transition().duration(500)
+        .attr("opacity", d => d.hl === "giant" ? 1 : 0)
+        .attr("r", d => d.hl === "giant" ? 9 : 3)
+        .attr("fill", d => d.hl === "giant" ? PINK : GRAY);
       annotate([giantAnno]);
     },
     () => { // 2 everyone
@@ -496,12 +500,14 @@ const S1 = (() => {
       ]);
     },
     () => { // 4 big flop
-      ranges.transition().duration(400).attr("opacity", 0.4);
-      const KEY = ["giant", "twofaced", "bigflop"];
+      tv.transition().duration(400).attr("opacity", 0.25);
+      spreadG.transition().duration(400).attr("opacity", 0);
+      ranges.transition().duration(400).attr("opacity", 0);
+      const KEY = ["giant", "bigflop"];
       dots.transition().duration(500)
         .attr("opacity", d => KEY.includes(d.hl) ? 1 : 0.18)
         .attr("r", d => KEY.includes(d.hl) ? 6.5 : 3)
-        .attr("fill", d => d.hl === "bigflop" ? PINK : d.hl === "giant" ? INKC : d.hl === "twofaced" ? TEAL : GRAY);
+        .attr("fill", d => d.hl === "bigflop" ? PINK : d.hl === "giant" ? INKC : GRAY);
       annotate([
         { id: "bf", x: x(flopC.f), y: y(flopC.m), dx: -10, dy: 66, anchor: "end",
           lines: ["2.4M followers —", "and videos under 1K views"] },
@@ -646,7 +652,7 @@ const S3 = (() => {
     .call(t => { t.append("tspan").attr("fill", PINK).text("the top 1%"); t.append("tspan").attr("class", "sub").attr("x", x(2.5e6)).attr("dy", 15).text("collects 64% of all views"); });
 
   // --- waffle view ---
-  const wafG = svg.append("g").attr("opacity", 0);
+  const wafG = svg.append("g").attr("opacity", 0).attr("pointer-events", "none");
   const CELLS = 10, CS = 14, GAP = 3, BW = CELLS * (CS + GAP);
   const WTOP = 200; // vertically centre the waffle block in the shared canvas
   const bandX = i => M.l + 10 + i * (BW + 30);
@@ -684,7 +690,7 @@ const S3 = (() => {
   });
 
   function showHist(stage) {
-    wafG.transition().duration(450).attr("opacity", 0);
+    wafG.attr("pointer-events", "none").transition().duration(450).attr("opacity", 0);
     histG.transition().duration(450).attr("opacity", 1);
     bars.transition().duration(700).delay((b, i) => i * 7)
       .attr("y", b => yh(b.length)).attr("height", b => yh(0) - yh(b.length))
@@ -696,7 +702,8 @@ const S3 = (() => {
   const steps = [
     () => showHist(0),
     () => showHist(1),
-    () => { histG.transition().duration(450).attr("opacity", 0); wafG.transition().duration(600).attr("opacity", 1); },
+    () => { histG.transition().duration(450).attr("opacity", 0);
+            wafG.attr("pointer-events", "all").transition().duration(600).attr("opacity", 1); },
   ];
   return { steps };
 })();
