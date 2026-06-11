@@ -141,7 +141,7 @@
   </div>
   <div class="kicker">209,543 videos &middot; 1,872 creators &middot; one algorithm</div>
   <h1>The TikTok Lottery</h1>
-  <p class="dek">A creator with 28 million followers posts a video. So does an account almost nobody follows. Thirty days later, the nobody has eight million views. This is not a fluke — it's how the platform works.</p>
+  <p class="dek">A creator with 28 million followers posts a video. So does an account with two thousand times fewer followers. Thirty days later, the small one has eight million views. This is not a fluke — it's how the platform works.</p>
   <div class="byline">
     <div class="names">By <b>Yehor Larcenko</b>, <b>Olha</b>, <b>Ivanna</b> and <b>Davyd</b></div>
     <div class="pub">Published June 12, 2026 · Data: June–November 2024</div>
@@ -151,7 +151,7 @@
 
 <section class="prose">
   <p class="lead">On most platforms, audience is destiny. A newspaper with a million subscribers reaches a million readers; a TV channel's ratings move slowly, year by year. TikTok made a different bet: every video, from anyone, starts almost from zero, and the algorithm decides who sees it next.</p>
-  <p>To see what that bet means in practice, we followed <strong>209,543 videos</strong> posted by 1,872 creators between June and November 2024 — every video tracked day by day for a month after posting, alongside each creator's follower count.</p>
+  <p>To see what that bet means in practice, we followed <strong>209,543 videos</strong> posted by 1,872 creators between June and November 2024 — every video tracked day by day from the moment it was posted, alongside each creator's follower count.</p>
   <p>Let's start with the biggest account in the data.</p>
 </section>
 
@@ -166,9 +166,9 @@
       <p>Keep it in mind. You're about to watch it stop mattering.</p></div></div>
     <div class="step" data-step="2"><div class="card">
       <p>Here are <b>all 1,872 creators</b>. The cloud leans upward, so followers aren't worthless. But look at the vertical spread:</p>
-      <p>at the <b>same</b> follower count, typical views differ by a factor of <b>100 or more</b>.</p></div></div>
+      <p>among creators with roughly <b>130,000 followers</b>, the typical video ranges from <b>350 views to 87,000</b> — a 250-fold difference at the same audience size.</p></div></div>
     <div class="step" data-step="3"><div class="card">
-      <p>Each line spans one creator's <b>worst to best</b> video. This account has 166,000 followers and posted 15 videos: thirteen stalled below 50,000 views.</p>
+      <p>Each line spans one creator's <b>worst to best</b> video. This account has 166,000 followers and posted 15 videos: thirteen never passed 170,000 views.</p>
       <p>The other two? <b>11.6 and 11.7 million.</b> Same account, same month, same audience.</p></div></div>
     <div class="step" data-step="4"><div class="card">
       <p>And size protects no one. This account has <b>2.4 million followers</b> — and posts videos that die under <b>1,000 views</b>.</p>
@@ -330,17 +330,17 @@ const S1 = (() => {
     .attr("x", x(2.2e5)).attr("y", y(2.2e5) - 12).attr("transform", `rotate(-31 ${x(2.2e5)} ${y(2.2e5) - 12})`)
     .text("if every follower watched every video");
 
-  // vertical "spread" bracket for step 2
+  // vertical "spread" bracket for step 2 — real extremes among creators with 100K-160K followers
   const spreadG = svg.append("g").attr("opacity", 0);
-  const bx = x(1.3e5);
-  spreadG.append("line").attr("x1", bx).attr("x2", bx).attr("y1", y(700)).attr("y2", y(7e4))
+  const bx = x(1.3e5), bLo = 346, bHi = 86974;
+  spreadG.append("line").attr("x1", bx).attr("x2", bx).attr("y1", y(bLo)).attr("y2", y(bHi))
     .attr("stroke", INKC).attr("stroke-width", 1.6);
-  [700, 7e4].forEach(v => spreadG.append("line")
+  [bLo, bHi].forEach(v => spreadG.append("line")
     .attr("x1", bx - 5).attr("x2", bx + 5).attr("y1", y(v)).attr("y2", y(v))
     .attr("stroke", INKC).attr("stroke-width", 1.6));
-  spreadG.append("text").attr("class", "anno").attr("x", bx - 12).attr("y", y(8000)).attr("text-anchor", "end")
-    .call(t => { t.append("tspan").text("same followers,");
-                 t.append("tspan").attr("class", "sub").attr("x", bx - 12).attr("dy", 15).text("views 100× apart"); });
+  spreadG.append("text").attr("class", "anno").attr("x", bx - 12).attr("y", y(6000)).attr("text-anchor", "end")
+    .call(t => { t.append("tspan").text("same followers —");
+                 t.append("tspan").attr("class", "sub").attr("x", bx - 12).attr("dy", 15).text("350 to 87,000 typical views"); });
 
   const cs = DATA.creators.map(d => ({ ...d, m: Math.max(d.m, 50), b: Math.max(d.b, 50), w: Math.max(d.w, 50) }));
   const dots = svg.append("g").selectAll("circle").data(cs).join("circle")
@@ -422,9 +422,10 @@ const S1 = (() => {
     },
     () => { // 4 big flop
       ranges.transition().duration(400).attr("opacity", 0.4);
+      const KEY = ["giant", "twofaced", "bigflop"];
       dots.transition().duration(500)
-        .attr("opacity", d => d.hl ? 1 : 0.18)
-        .attr("r", d => d.hl ? 6.5 : 3)
+        .attr("opacity", d => KEY.includes(d.hl) ? 1 : 0.18)
+        .attr("r", d => KEY.includes(d.hl) ? 6.5 : 3)
         .attr("fill", d => d.hl === "bigflop" ? PINK : d.hl === "giant" ? INKC : d.hl === "twofaced" ? TEAL : GRAY);
       annotate([
         { id: "bf", x: x(flopC.f), y: y(flopC.m), dx: -10, dy: 66, anchor: "end",
@@ -594,7 +595,7 @@ const S3 = (() => {
   const conf = [
     { key: "topic", title: "Sport beats dance", sub: "Median views by topic. Sports & fitness videos typically double the outcome of dance or life-hack content.",
       rename: k => NICE[k] || k, top: 9 },
-    { key: "duration", title: "Longer wins, actually", sub: "The 15-second TikTok stereotype doesn't pay: videos of 1–2 minutes typically earn almost 3× more than clips under 30s.", top: 5 },
+    { key: "duration", title: "Longer wins, actually", sub: "The 15-second TikTok stereotype doesn't pay: videos of 1–2 minutes typically earn about 2.5× more than clips under 30s.", top: 5 },
     { key: "emotion", title: "Surprise outperforms joy", sub: "80% of videos lead with joy — but the rarer surprise-led videos do half again better at the median.", top: 6 },
     { key: "ai", title: "AI content doesn't take off", sub: "Median views are a third lower — and at the 90th percentile, organic videos reach 20,300 views vs 2,500 for AI-generated ones.", top: 2 },
   ];
@@ -653,11 +654,12 @@ const S3 = (() => {
     if (sel.dur >= 0) pool = pool.filter(r => r[1] === sel.dur);
     if (sel.emo >= 0) pool = pool.filter(r => r[2] === sel.emo);
     const verdict = d3.select("#verdict");
-    if (pool.length < 30) { verdict.html("Only " + pool.length + " real videos match this exact recipe — too few to draw 100. Loosen one filter."); return; }
+    if (pool.length < 100) { verdict.html("Only " + pool.length + " real videos match this exact recipe — too few to draw 100. Loosen one filter."); return; }
     const draw = d3.shuffle(pool.slice()).slice(0, 100).map(r => Math.max(r[3], 1));
     draw.sort(d3.ascending);
     const med = d3.quantile(draw, 0.5), best = d3.max(draw), died = draw.filter(v => v < 1000).length;
     const dots = dotsG.selectAll("circle").data(draw, (v, i) => i);
+    dots.exit().remove();
     dots.enter().append("circle")
       .attr("cy", H - 62).attr("r", 4).attr("fill", "#bbb")
       .merge(dots)
@@ -675,14 +677,14 @@ const S3 = (() => {
 /* =========================================================
    scrollama wiring
    ========================================================= */
-[["#scrolly1", S1], ["#scrolly2", S2], ["#scrolly3", S3]].forEach(([selr, mod]) => {
+const scrollers = [["#scrolly1", S1], ["#scrolly2", S2], ["#scrolly3", S3]].map(([selr, mod]) =>
   scrollama().setup({ step: `${selr} .step`, offset: 0.55 })
     .onStepEnter(({ element, index, direction }) => {
       d3.selectAll(`${selr} .step`).classed("is-active", false);
       d3.select(element).classed("is-active", true);
       mod.steps[index]();
-    });
-});
+    }));
+window.addEventListener("resize", () => scrollers.forEach(s => s.resize()));
 // fire first steps on load so charts aren't empty before scrolling
 S1.steps[0](); S2.steps[0](); S3.steps[0]();
 </script>
