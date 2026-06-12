@@ -429,9 +429,9 @@ const S1 = (() => {
   [bLo, bHi].forEach(v => spreadG.append("line")
     .attr("x1", bx - 5).attr("x2", bx + 5).attr("y1", y(v)).attr("y2", y(v))
     .attr("stroke", INKC).attr("stroke-width", 1.6));
-  spreadG.append("text").attr("class", "anno").attr("x", bx - 12).attr("y", y(6000)).attr("text-anchor", "end")
+  spreadG.append("text").attr("class", "anno").attr("x", bx - 14).attr("y", y(bHi) + 4).attr("text-anchor", "end")
     .call(t => { t.append("tspan").text("same followers —");
-                 t.append("tspan").attr("class", "sub").attr("x", bx - 12).attr("dy", 15).text("350 to 87,000 typical views"); });
+                 t.append("tspan").attr("class", "sub").attr("x", bx - 14).attr("dy", 15).text("350 to 87,000 typical views"); });
 
   const cs = DATA.creators.map(d => ({ ...d, m: Math.max(d.m, 50), b: Math.max(d.b, 50), w: Math.max(d.w, 50) }));
   const tip = d3.select("#tip");
@@ -710,9 +710,10 @@ const S3 = (() => {
               `${b.over100k}% pass 100K · ${b.over1m}% pass 1M`))
       .on("mouseout", () => d3.select("#tip").style("display", "none"));
   });
+  // each legend item sits exactly under its waffle's left edge
   const lg = wafG.append("g").attr("transform", `translate(${M.l + 10}, ${WTOP + BW + 64})`);
   [[colDied, "flopped: under 1K views"], [colMid, "1K – 100K"], [colBig, "over 100K"], [colMega, "over 1M"]].forEach((d, i) => {
-    const g = lg.append("g").attr("transform", `translate(${i * 190},0)`);
+    const g = lg.append("g").attr("transform", `translate(${i * (BW + 30)},0)`);
     g.append("rect").attr("width", 13).attr("height", 13).attr("rx", 2.5).attr("fill", d[0]);
     g.append("text").attr("class", "ref-label").attr("x", 19).attr("y", 11).text(d[1]);
   });
