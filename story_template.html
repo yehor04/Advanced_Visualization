@@ -143,6 +143,33 @@
   .strip-legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: -1px; }
   #strip { margin-top: 4px; }
 
+  /* ---------- Part 6 · Be the algorithm ---------- */
+  #algo { background: var(--sandbox); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 56px 24px 64px; }
+  #algo .inner { max-width: 1080px; margin: 0 auto; }
+  .algo-grid { display: grid; grid-template-columns: 270px 1fr; gap: 28px; align-items: start; }
+  .algo-ctrl { position: sticky; top: 20px; }
+  .presets { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 6px; }
+  .preset { font: 500 12.5px/1 var(--sans); padding: 7px 12px; border: 1px solid var(--chipline); border-radius: 999px;
+            background: var(--chip); cursor: pointer; transition: all 0.12s; }
+  .preset:hover { border-color: var(--ink); }
+  .preset.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .aslider { margin: 11px 0; }
+  .aslider .lab { display: flex; justify-content: space-between; font: 500 13px/1.3 var(--sans); margin-bottom: 4px; }
+  .aslider .lab b { color: var(--pink); font-variant-numeric: tabular-nums; }
+  .aslider input { width: 100%; accent-color: var(--pink); cursor: pointer; }
+  .algo-meter { margin-bottom: 12px; }
+  .algo-meter-row { display: flex; align-items: baseline; gap: 10px; }
+  #algo-pct { font: 800 30px/1 var(--display); color: var(--pink); font-variant-numeric: tabular-nums; }
+  .algo-meter-sub { font: 500 13px/1.3 var(--sans); color: var(--muted); }
+  .algo-bar { height: 9px; background: var(--card); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; margin: 8px 0 6px; }
+  .algo-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--pink), #ff8aa6); transition: width 0.3s; }
+  .algo-msg { font: 400 15px/1.55 var(--serif); color: var(--ink); min-height: 46px; }
+  .algo-msg b { font-weight: 700; }
+  #algo-canvas { width: 100%; height: auto; background: #fff; border-radius: 10px; display: block; }
+  .algo-legend { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+                 font: 600 11.5px/1.4 var(--sans); color: var(--ink); margin-top: 8px; }
+  @media (max-width: 760px) { .algo-grid { grid-template-columns: 1fr; } .algo-ctrl { position: static; } }
+
   footer { max-width: 640px; margin: 0 auto; padding: 48px 24px 90px; color: var(--muted); border-top: 1px solid var(--line); }
   footer p { font: italic 400 14.5px/1.75 var(--serif); }
   footer h4 { font: 600 12px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); margin: 0 0 14px; }
@@ -318,6 +345,41 @@
 </section>
 
 <section class="prose">
+  <div class="part"><b>Part 6</b> · Be the algorithm</div>
+  <h2>Fine — surely <em>something</em> predicts a hit?</h2>
+  <p>Random draws are one thing. But you're smart; you've watched a thousand videos. So take the algorithm's job. Decide what a feed should reward — outrage, joy, questions, short and punchy, AI slop — and we'll let <strong>1,500 real videos</strong> rise or sink by your rules. Then we'll score your taste against what actually went viral.</p>
+</section>
+
+<section id="algo">
+  <div class="inner">
+    <div class="algo-grid">
+      <div class="algo-ctrl">
+        <div class="chip-label">Try a feed</div>
+        <div class="presets" id="algo-presets"></div>
+        <div class="chip-label" style="margin-top:16px">Your weights — what should the feed reward?</div>
+        <div id="algo-sliders"></div>
+      </div>
+      <div class="algo-stage">
+        <div class="algo-meter">
+          <div class="algo-meter-row">
+            <span id="algo-pct">0%</span>
+            <span class="algo-meter-sub">match with what actually went viral</span>
+          </div>
+          <div class="algo-bar"><div class="algo-fill" id="algo-fill"></div></div>
+          <div id="algo-msg" class="algo-msg"></div>
+        </div>
+        <svg id="algo-canvas"></svg>
+        <div class="algo-legend">
+          <span>▲ surfaced — your feed promotes these</span>
+          <span style="color:var(--muted)">▼ buried &middot; each dot = one real video, sized by its real views</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="prose">
+  <p>Tune all day and you top out around a <strong>5% match</strong>. That isn't a flaw in your taste — it's the ceiling. Across 209,543 videos, everything a creator <em>controls</em> — topic, length, emotion, captions — explains only about a twentieth of who goes viral. The honest signal is thin: <span class="hl-pink">ask a question</span>, don't make it too short, and otherwise the algorithm keeps its reasons to itself.</p>
   <p>The machine that promised to free creators from the tyranny of follower counts replaced it with something stranger: a system where <span class="hl-pink">a cooking video from nowhere</span> outdraws a 28-million-follower account, where <span class="hl-teal">a dead video resurrects itself in week two</span>, and where the only reliable strategy is the lottery player's strategy — buy more tickets.</p>
   <p>Half of everything posted disappears under a thousand views. <span class="hl-pink">One percent takes two-thirds of the prize pool.</span> And every upload, from anyone, is another ticket.</p>
 </section>
@@ -862,6 +924,137 @@ const S3 = (() => {
     if (!entries.some(e => e.isIntersecting)) return;
     obs.disconnect(); doRoll();
   }, { threshold: 0.35 }).observe(document.querySelector("#sandbox"));
+})();
+
+/* =========================================================
+   PART 6 — Be the algorithm (canvas buoyancy + alignment meter)
+   ========================================================= */
+(() => {
+  const A = DATA.algorithm;
+  const FEAT = A.features, LAB = A.labels, MEANS = A.means, MAXR = A.maxR;
+  const TOPIC_COL = ["#e377c2", "#ff9f1c", "#a78bfa", "#34d399", "#22d3ee", "#f87171", "#9ca3af", "#60a5fa", "#fbbf24"];
+  const vids = d3.shuffle(A.videos.map(v => ({ f: v.f, logp: Math.log10(Math.max(v.p, 1)), p: v.p,
+    col: TOPIC_COL[v.t % TOPIC_COL.length], cap: v.c, y: 0, vy: 0, ty: 0 })));
+
+  const W = 920, H = 460, TOP = 64, FLOOR = H - 30;
+  const svg = d3.select("#algo-canvas").attr("viewBox", `0 0 ${W} ${H}`);
+  const xOf = i => 30 + (i / (vids.length - 1)) * (W - 60);  // x is spacing only, no meaning
+  vids.forEach((v, i) => { v.x = xOf(i); v.y = FLOOR; });
+
+  // waterline + labels (drawn once)
+  svg.append("line").attr("x1", 0).attr("x2", W).attr("y1", TOP).attr("y2", TOP)
+    .attr("stroke", "#fe2c55").attr("stroke-opacity", 0.4).attr("stroke-dasharray", "4 4");
+  svg.append("text").attr("x", 12).attr("y", TOP - 8).attr("class", "anno").style("font-size", "12px")
+    .attr("fill", "#fe2c55").text("THE FOR-YOU LINE");
+  const dotG = svg.append("g"), capG = svg.append("g");
+
+  const W_ = {}; FEAT.forEach(f => W_[f] = 0);
+
+  // ---- sliders ----
+  const sl = d3.select("#algo-sliders");
+  FEAT.forEach((f, i) => {
+    const d = sl.append("div").attr("class", "aslider");
+    d.append("div").attr("class", "lab")
+      .html(`<span>${LAB[i]}</span><b id="av_${f}">0</b>`);
+    d.append("input").attr("type", "range").attr("min", -100).attr("max", 100).attr("value", 0)
+      .attr("id", "as_" + f)
+      .on("input", function () { W_[f] = +this.value; document.getElementById("av_" + f).textContent = W_[f]; rescore(); });
+  });
+
+  // ---- presets ----
+  const PRESETS = {
+    "Rage-bait": { anger: 100, question: 55, surprise: 40, joy: -30 },
+    "Wholesome": { joy: 100, anger: -90, sadness: -30, emoji: 40 },
+    "Tearjerker": { sadness: 100, surprise: 25, anger: 20 },
+    "AI slop farm": { ai: 100, surprise: 50, short: 60 },
+    "Reveal the real feed": A.true_weights,
+    "Reset": {},
+  };
+  const pe = d3.select("#algo-presets");
+  Object.keys(PRESETS).forEach(name => {
+    pe.append("div").attr("class", "preset").text(name).on("click", function () {
+      pe.selectAll(".preset").classed("on", false);
+      d3.select(this).classed("on", true);
+      FEAT.forEach(f => {
+        W_[f] = PRESETS[name][f] || 0;
+        document.getElementById("as_" + f).value = W_[f];
+        document.getElementById("av_" + f).textContent = W_[f];
+      });
+      rescore();
+    });
+  });
+
+  // ---- scoring ----
+  function pearson(a, b) {
+    const n = a.length, ma = d3.mean(a), mb = d3.mean(b);
+    let num = 0, da = 0, db = 0;
+    for (let i = 0; i < n; i++) { const u = a[i] - ma, w = b[i] - mb; num += u * w; da += u * u; db += w * w; }
+    return num / Math.sqrt(da * db || 1);
+  }
+  function rescore() {
+    vids.forEach(v => { let s = 0; for (let i = 0; i < FEAT.length; i++) s += (W_[FEAT[i]] / 100) * (v.f[i] - MEANS[i]); v.score = s; });
+    const sc = vids.map(v => v.score), mn = d3.min(sc), mx = d3.max(sc);
+    vids.forEach(v => { const n = (v.score - mn) / ((mx - mn) || 1); v.ty = FLOOR - (FLOOR - TOP) * n; });
+    const corr = pearson(vids.map(v => v.score), vids.map(v => v.logp));
+    const pct = Math.max(0, Math.min(100, Math.round(corr / MAXR * 100)));
+    document.getElementById("algo-fill").style.width = pct + "%";
+    document.getElementById("algo-pct").textContent = pct + "%";
+    let msg;
+    const anyWeight = FEAT.some(f => W_[f] !== 0);
+    if (!anyWeight) msg = "Move a slider, or try a preset. Videos rise by your rules.";
+    else if (pct >= 88) msg = `<b>${pct}% — you cracked it.</b> The real feed rewards <b>questions</b> and <b>longer</b> videos. Notice how little the emotions mattered.`;
+    else if (corr < 0) msg = `<b>${pct}%.</b> You're promoting exactly what real viewers ignored — try inverting your strongest slider.`;
+    else if (pct >= 55) msg = `<b>${pct}% match.</b> Warm. Something you're rewarding lines up with real virality. Keep tuning.`;
+    else msg = `<b>${pct}% match.</b> What you surface barely overlaps with what went viral. Most emotions are dead ends here.`;
+    document.getElementById("algo-msg").innerHTML = msg;
+  }
+
+  // ---- animation ----
+  let raf = null, running = false;
+  function frame() {
+    vids.forEach(v => { v.vy += (v.ty - v.y) * 0.014; v.vy *= 0.82; v.y += v.vy; });
+    const dots = dotG.selectAll("circle").data(vids);
+    dots.join("circle")
+      .attr("cx", v => v.x).attr("cy", v => v.y)
+      .attr("r", v => 2 + Math.sqrt(v.p) / 900)
+      .attr("fill", v => v.col)
+      .attr("opacity", v => v.y < TOP + 70 ? 0.95 : 0.28);
+    // captions for the top surfacers: highest risers, well separated, in 2 rows,
+    // each on a white pill so it stays legible over the dots
+    const short = s => s.length > 26 ? s.slice(0, 25).trimEnd() + "…" : s;
+    const risers = vids.filter(v => v.y < TOP + 55).sort((a, b) => a.y - b.y);
+    const placed = [];
+    for (const v of risers) {
+      if (placed.length >= 4) break;
+      if (placed.every(p => Math.abs(p.x - v.x) > 330)) placed.push(v);
+    }
+    placed.sort((a, b) => a.x - b.x).forEach((v, i) => { v._row = i % 2; });
+    const cap = capG.selectAll("g.cap").data(placed, d => d.cap).join(
+      enter => {
+        const g = enter.append("g").attr("class", "cap").attr("opacity", 0);
+        g.append("rect").attr("rx", 3).attr("height", 17).attr("fill", "#fff").attr("fill-opacity", 0.82);
+        g.append("text").attr("class", "anno").style("font-size", "11.5px").attr("y", 12.5);
+        return g;
+      }, update => update, exit => exit.remove());
+    cap.each(function (d) {
+      const g = d3.select(this), anchorEnd = d.x > W - 250;
+      const t = g.select("text").attr("fill", d3.color(d.col).darker(1.4)).text(short(d.cap))
+        .attr("text-anchor", anchorEnd ? "end" : "start").attr("x", anchorEnd ? -4 : 4);
+      const w = this.querySelector("text").getComputedTextLength() + 8;
+      g.select("rect").attr("x", anchorEnd ? -w + 2 : -2).attr("width", w);
+    });
+    cap.attr("transform", d => `translate(${Math.max(60, Math.min(d.x, W - 60))}, ${TOP + 10 + d._row * 21})`)
+      .transition().duration(200).attr("opacity", 1);
+    if (running) raf = requestAnimationFrame(frame);
+  }
+  // run only while the section is on screen (saves CPU)
+  new IntersectionObserver(es => {
+    const vis = es.some(e => e.isIntersecting);
+    if (vis && !running) { running = true; frame(); }
+    else if (!vis && running) { running = false; cancelAnimationFrame(raf); }
+  }, { threshold: 0.05 }).observe(document.querySelector("#algo"));
+
+  rescore();
 })();
 
 /* =========================================================
