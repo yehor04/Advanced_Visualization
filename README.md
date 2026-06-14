@@ -47,3 +47,17 @@ follower panels. Engagement numbers are platform data; topic and emotion labels 
 model-derived by the dataset authors. Views = cumulative play count on the last observed
 day; lifelines use the 73,940 videos tracked for ≥30 days; medians are used throughout
 because of the extreme skew.
+
+## Reproducing the data
+
+The page embeds a precomputed extract — it does not fetch the dataset at runtime.
+To regenerate from the real HuggingFace dataset:
+
+```bash
+pip install pandas pyarrow datasets
+python build_story_data.py        # Parts 1-5 -> data/story_data.json
+python build_algorithm_data.py    # Part 6 (Be the Algorithm) -> merges into story_data.json
+# then inject data/story_data.json into story_template.html -> index.html
+```
+
+Raw parquet caches are gitignored (~240 MB); the scripts download them on first run.
